@@ -7,6 +7,8 @@ generic/matchstates.as;
 generic/bots.as;
 generic/awards.as;
 
-jca.as;
+jca/utils.as;
+jca/ca-round.as;
+jca/gt-callins.as;
 
 legacy/quake1.as;

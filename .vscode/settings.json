@@ -1,0 +1,7 @@
+{
+    "angelScript.builtinStringTypes": [
+        "string",
+        "string_t",
+        "String"
+    ]
+}

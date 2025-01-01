@@ -1,0 +1,106 @@
+// https://github.com/TeamForbiddenLLC/warfork-qfusion
+// https://warforkwiki.com/index.php?title=Gametype_Scripting#Game_Types
+
+[BuiltinString]
+class String {
+    bool opEquals(const String& in other) const; 
+}
+
+[BuiltinString]
+class string {
+    bool opEquals(const String& in other) const; 
+}
+
+class Client {
+
+}
+
+class Entity {
+
+}
+
+class Bot {
+
+}
+
+// CvarAddon.predefined
+
+// Flags for CVars (examples)
+const int CVAR_NONE         = 0;     // No special properties
+const int CVAR_READONLY     = 1;     // Read-only variable
+const int CVAR_ARCHIVE      = 2;     // Persistent across sessions
+const int CVAR_SERVER       = 4;     // Synchronized across the server
+
+class Cvar {
+	Cvar(const String&in name, const String&in, const uint cvarflags);
+	Cvar(const Cvar&in);
+
+	void reset();
+	void set(const String&in);
+	void set(float);
+	void set(int);
+	void set(double);
+	void set_modified(bool);
+	bool get_modified() const;
+	bool get_boolean() const;
+	int get_integer() const;
+	float get_value() const;
+	const String@ get_name() const;
+	const String@ get_string() const;
+	const String@ get_defaultString() const;
+	const String@ get_latchedString() const;
+};
+
+enum eCvarFlag {
+	CVAR_ARCHIVE = 0x1,      // set to cause it to be saved to vars.rc
+	CVAR_USERINFO = 0x2,     // added to userinfo  when changed
+	CVAR_SERVERINFO = 0x4,   // added to serverinfo when changed
+	CVAR_NOSET = 0x8,        // don't allow change from console at all
+	CVAR_LATCH = 0x10,       // but can be set from the command line
+	CVAR_LATCH_VIDEO = 0x20, // save changes until map restart
+	CVAR_LATCH_SOUND = 0x40, // save changes until video restart
+	CVAR_CHEAT = 0x80,       // will be reset to default unless cheats
+	CVAR_READONLY = 0x100   // don't allow changing by user, ever
+};
+
+class Gametype {
+    uint spawnableItemsMask;
+    uint respawnableItemsMask;
+    uint dropableItemsMask;
+    uint pickableItemsMask;
+    bool isTeamBased;
+    bool isRace;
+    bool isTutorial;
+    bool inverseScore;
+    bool hasChallengersQueue;
+    bool hasChallengersRoulette;
+    int maxPlayersPerTeam;
+    int ammoRespawn;
+    int armorRespawn;
+    int weaponRespawn;
+    int healthRespawn;
+    int powerupRespawn;
+    int megahealthRespawn;
+    int ultrahealthRespawn;
+    bool readyAnnouncementEnabled;
+    bool scoreAnnouncementEnabled;
+    bool countdownEnabled;
+    bool mathAbortDisabled;
+    bool matchAbortDisabled;
+    bool shootingDisabled;
+    bool infiniteAmmo;
+    bool canForceModels;
+    bool canShowMinimap;
+    bool teamOnlyMinimap;
+    int spawnpointRadius;
+    bool customDeadBodyCam;
+    bool removeInactivePlayers;
+    bool mmCompatible;
+    uint numBots;
+    bool dummyBots;
+    uint forceTeamHumans;
+    uint forceTeamBots;
+    bool disableObituaries;
+}
+
+Gametype gametype;
