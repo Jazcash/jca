@@ -3,5 +3,6 @@
         "string",
         "string_t",
         "String"
-    ]
+    ],
+    "angelScript.implicitMutualInclusion": true
 }

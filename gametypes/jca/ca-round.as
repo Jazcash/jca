@@ -1,21 +1,3 @@
-uint caTimelimit1v1;
-
-Cvar g_ca_timelimit1v1( "g_ca_timelimit1v1", "60", 0 );
-
-Cvar g_noclass_inventory( "g_noclass_inventory", "gb mg rg gl rl pg lg eb cells shells grens rockets plasma lasers bullets", 0 );
-Cvar g_class_strong_ammo( "g_class_strong_ammo", "1 75 20 20 40 150 150 15", 0 ); // GB MG RG GL RL PG LG EB
-
-const int CA_ROUNDSTATE_NONE = 0;
-const int CA_ROUNDSTATE_PREROUND = 1;
-const int CA_ROUNDSTATE_ROUND = 2;
-const int CA_ROUNDSTATE_ROUNDFINISHED = 3;
-const int CA_ROUNDSTATE_POSTROUND = 4;
-
-const int CA_LAST_MAN_STANDING_BONUS = 0; // 0 points for each frag
-
-int[] caBonusScores(maxClients);
-int[] caLMSCounts(GS_MAX_TEAMS); // last man standing bonus for each team
-
 class cCARound {
     int state;
     int numRounds;
@@ -28,6 +10,7 @@ class cCARound {
     int timelimit;
     int alpha_oneVS;
     int beta_oneVS;
+    GameStats gameStats();
 
     cCARound() {
         this.state = CA_ROUNDSTATE_NONE;
@@ -38,7 +21,6 @@ class cCARound {
         this.timelimit = 0;
         @this.alphaSpawn = null;
         @this.betaSpawn = null;
-        
         this.alpha_oneVS = 0;
         this.beta_oneVS = 0;
     }
@@ -61,8 +43,7 @@ class cCARound {
         bestDistance = 0;
         @spot2 = null;
 		
-        for (
-            uint i = 0; i < spawns.size(); i++) {
+        for (uint i = 0; i < spawns.size(); i++) {
             @spawn = spawns[i];
             dist = spot1.origin.distance(spawn.origin);
             if (dist > bestDistance || @spot2 == null) {
@@ -86,9 +67,9 @@ class cCARound {
         gametype.countdownEnabled = false;
 
         // set spawnsystem type to not respawn the players when they die
-        for (
-            int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++)
+        for (int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++) {
             gametype.setTeamSpawnsystem(team, SPAWNSYSTEM_HOLD, 0, 0, true);
+        }
 
         // clear scores
 
@@ -101,18 +82,11 @@ class cCARound {
             team.stats.clear();
 
             // respawn all clients inside the playing teams
-            for (
-                int j = 0; @team.ent(j) != null; j++) {
+            for (int j = 0; @team.ent(j) != null; j++) {
                 @ent = @team.ent(j);
                 ent.client.stats.clear(); // clear player scores & stats
             }
         }
-
-        // clear bonuses
-        for (i = 0; i < maxClients; i++)
-            caBonusScores[i] = 0;
-
-        this.clearLMSCounts();
 
         this.numRounds = 0;
         this.newRound();
@@ -120,27 +94,8 @@ class cCARound {
         this.alpha_oneVS = 0;
         this.beta_oneVS = 0;
 
-    }
-
-    void addPlayerBonus(Client@ client, int bonus) {
-        if (@client == null)
-            return;
-
-        caBonusScores[client.playerNum] += bonus;
-    }
-
-    int getPlayerBonusScore(Client@ client) {
-        if (@client == null)
-            return 0;
-
-        return caBonusScores[client.playerNum];
-    }
-
-    void clearLMSCounts() {
-		// clear last-man-standing counts
-        for (
-            int i = TEAM_PLAYERS; i < GS_MAX_TEAMS; i++)
-            caLMSCounts[i] = 0;
+        //this.allRoundStats = {};
+        this.lastRoundStats = {};
     }
 
     void endGame() {
@@ -155,6 +110,12 @@ class cCARound {
 
         this.newRoundState(CA_ROUNDSTATE_PREROUND);
         this.numRounds++;
+
+        //this.allRoundStats.insertLast(this.lastRoundStats);
+        this.lastRoundStats = {
+            { "round_winner", null },
+            { "teamStats", Dictionary = {} }
+        };
     }
 
     void newRoundState(int newState) {
@@ -192,19 +153,15 @@ class cCARound {
             Entity@ ent;
             Team@ team;
 
-            for (
-                int i = TEAM_PLAYERS; i < GS_MAX_TEAMS; i++) {
+            for (int i = TEAM_PLAYERS; i < GS_MAX_TEAMS; i++) {
                 @team = @G_GetTeam(i);
 
                 // respawn all clients inside the playing teams
-                for (
-                    int j = 0; @team.ent(j) != null; j++) {
+                for (int j = 0; @team.ent(j) != null; j++) {
                     @ent = @team.ent(j);
                     ent.client.respawn(false);
                 }
             }
-
-            this.clearLMSCounts();
         }
         break;
 
@@ -239,30 +196,30 @@ class cCARound {
 
             count_alpha = count_alpha_total = 0;
             @team = @G_GetTeam(TEAM_ALPHA);
-            for (
-                int j = 0; @team.ent(j) != null; j++) {
+            for (int j = 0; @team.ent(j) != null; j++) {
                 @ent = @team.ent(j);
                 if (!ent.isGhosting()) {
                     count_alpha++;
                     @lastManStanding = @ent;
                     // ch : add round
-                    if (@ent.client != null)
+                    if (@ent.client != null) {
                         ent.client.stats.addRound();
+                    }
                 }
                 count_alpha_total++;
             }
 
             count_beta = count_beta_total = 0;
             @team = @G_GetTeam(TEAM_BETA);
-            for (
-                int j = 0; @team.ent(j) != null; j++) {
+            for (int j = 0; @team.ent(j) != null; j++) {
                 @ent = @team.ent(j);
                 if (!ent.isGhosting()) {
                     count_beta++;
                     @lastManStanding = @ent;
                     // ch : add round
-                    if (@ent.client != null)
+                    if (@ent.client != null) {
                         ent.client.stats.addRound();
+                    }
                 }
                 count_beta_total++;
             }
@@ -277,16 +234,12 @@ class cCARound {
                 soundIndex = G_SoundIndex("sounds/announcer/ctf/score_enemy0" + (1 + (rand() & 1)));
                 G_AnnouncerSound(null, soundIndex, TEAM_BETA, false, null);
 
-                if (!gametype.isInstagib && count_alpha == 1) { // he's the last man standing. Drop a bonus 
+                if (!gametype.isInstagib && count_alpha == 1) {
                     if (count_beta_total > 1) {
                         lastManStanding.client.addAward(S_COLOR_GREEN + "Last Player Standing!");
-                        // ch :
-                        if (alpha_oneVS > ONEVS_AWARD_COUNT)
-                        	// lastManStanding.client.addMetaAward( "Last Man Standing" );
+                        if (alpha_oneVS > ONEVS_AWARD_COUNT) {
                             lastManStanding.client.addAward("Last Man Standing");
-
-                        this.addPlayerBonus(lastManStanding.client, caLMSCounts[TEAM_ALPHA] * CA_LAST_MAN_STANDING_BONUS);
-                        GT_updateScore(lastManStanding.client);
+                        }
                     }
                 }
             } else if (count_beta > count_alpha) {
@@ -297,16 +250,12 @@ class cCARound {
                 soundIndex = G_SoundIndex("sounds/announcer/ctf/score_enemy0" + (1 + (rand() & 1)));
                 G_AnnouncerSound(null, soundIndex, TEAM_ALPHA, false, null);
 
-                if (!gametype.isInstagib && count_beta == 1) { // he's the last man standing. Drop a bonus
+                if (!gametype.isInstagib && count_beta == 1) {
                     if (count_alpha_total > 1) {
                         lastManStanding.client.addAward(S_COLOR_GREEN + "Last Player Standing!");
-                        // ch :
-                        if (beta_oneVS > ONEVS_AWARD_COUNT)
-                        	// lastManStanding.client.addMetaAward( "Last Man Standing" );
+                        if (beta_oneVS > ONEVS_AWARD_COUNT) {
                             lastManStanding.client.addAward("Last Man Standing");
-
-                        this.addPlayerBonus(lastManStanding.client, caLMSCounts[TEAM_BETA] * CA_LAST_MAN_STANDING_BONUS);
-                        GT_updateScore(lastManStanding.client);
+                        }
                     }
                 }
             } else { // draw round
@@ -321,8 +270,9 @@ class cCARound {
     }
 
     void think() {
-        if (this.state == CA_ROUNDSTATE_NONE)
+        if (this.state == CA_ROUNDSTATE_NONE) {
             return;
+        }
 		
         if (match.getState() != MATCH_STATE_PLAYTIME) {
             this.endGame();
@@ -339,8 +289,9 @@ class cCARound {
                 // we can't use the authomatic countdown announces because their are based on the
                 // matchstate timelimit, and prerounds don't use it. So, fire the announces "by hand".
                 int remainingSeconds = int((this.roundStateEndTime - levelTime) * 0.001f) + 1;
-                if (remainingSeconds < 0)
+                if (remainingSeconds < 0) {
                     remainingSeconds = 0;
+                }
 
                 if (remainingSeconds < this.countDown) {
                     this.countDown = remainingSeconds;
@@ -386,8 +337,9 @@ class cCARound {
                 }
 				
                 int remainingSeconds = int(left * 0.001f) + 1;
-                if (remainingSeconds < 0)
+                if (remainingSeconds < 0) {
                     remainingSeconds = 0;
+                }
 				
                 this.timelimit = remainingSeconds;
                 match.setClockOverride(minuteLeft - levelTime);
@@ -403,16 +355,15 @@ class cCARound {
             Team@ team;
             int count;
 
-            for (
-                int i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++) {
+            for (int i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++) {
                 @team = @G_GetTeam(i);
                 count = 0;
 
-                for (
-                    int j = 0; @team.ent(j) != null; j++) {
+                for (int j = 0; @team.ent(j) != null; j++) {
                     @ent = @team.ent(j);
-                    if (!ent.isGhosting())
+                    if (!ent.isGhosting()) {
                         count++;
+                    }
                 }
 
                 if (count == 0) {
@@ -427,16 +378,12 @@ class cCARound {
         Entity@ ent;
         Team@ team;
 
-        if (this.state != CA_ROUNDSTATE_ROUND)
+        if (this.state != CA_ROUNDSTATE_ROUND) {
             return;
+        }
 
         if (@target != null && @target.client != null && @attacker != null && @attacker.client != null) {
-            if (gametype.isInstagib) {
-                G_PrintMsg(target, "You were fragged by " + attacker.client.name + "\n");
-            } else {
-				// report remaining health/armor of the killer
-                G_PrintMsg(target, "You were fragged by " + attacker.client.name + "\n");
-            }
+            G_PrintMsg(target, "You were fragged by " + attacker.client.name + "\n");
 
             // if the attacker is the only remaining player on the team,
             // report number or remaining enemies
@@ -445,25 +392,21 @@ class cCARound {
 
             // count attacker teammates
             @team = @G_GetTeam(attacker.team);
-            for (
-                int j = 0; @team.ent(j) != null; j++) {
+            for (int j = 0; @team.ent(j) != null; j++) {
                 @ent = @team.ent(j);
-                if (!ent.isGhosting())
+                if (!ent.isGhosting()) {
                     attackerCount++;
+                }
             }
 
             // count target teammates
             @team = @G_GetTeam(target.team);
-            for (
-                int j = 0; @team.ent(j) != null; j++) {
+            for (int j = 0; @team.ent(j) != null; j++) {
                 @ent = @team.ent(j);
-                if (!ent.isGhosting() && @ent != @target)
+                if (!ent.isGhosting() && @ent != @target) {
                     targetCount++;
+                }
             }
-
-			// amount of enemies for the last-man-standing award
-            if (targetCount == 1 && caLMSCounts[target.team] == 0)
-                caLMSCounts[target.team] = attackerCount;
 
             if (attackerCount == 1 && targetCount == 1) {
                 G_PrintMsg(null, "1v1! Good luck!\n");
@@ -471,11 +414,11 @@ class cCARound {
 
                 // find the alive player in target team again (doh)
                 @team = @G_GetTeam(target.team);
-                for (
-                    int j = 0; @team.ent(j) != null; j++) {
+                for (int j = 0; @team.ent(j) != null; j++) {
                     @ent = @team.ent(j);
-                    if (ent.isGhosting() || @ent == @target)
+                    if (ent.isGhosting() || @ent == @target) {
                         continue;
+                    }
 
                     ent.client.addAward(S_COLOR_ORANGE + "1v1! Good luck!");
                     break;
@@ -487,25 +430,26 @@ class cCARound {
 
                 // console print for the team
                 @team = @G_GetTeam(attacker.team);
-                for (
-                    int j = 0; @team.ent(j) != null; j++) {
+                for (int j = 0; @team.ent(j) != null; j++) {
                     G_PrintMsg(team.ent(j), "1v" + targetCount + "! " + attacker.client.name + " is on its own!\n");
                 }
                 
                 // ch : update last man standing count
-                if (attacker.team == TEAM_ALPHA && targetCount > alpha_oneVS)
-                    alpha_oneVS = targetCount; else if (attacker.team == TEAM_BETA && targetCount > beta_oneVS)
+                if (attacker.team == TEAM_ALPHA && targetCount > alpha_oneVS) {
+                    alpha_oneVS = targetCount; 
+                } else if (attacker.team == TEAM_BETA && targetCount > beta_oneVS) {
                     beta_oneVS = targetCount;
+                }
             } else if (attackerCount > 1 && targetCount == 1) {
                 Entity@ survivor;
 
                 // find the alive player in target team again (doh)
                 @team = @G_GetTeam(target.team);
-                for (
-                    int j = 0; @team.ent(j) != null; j++) {
+                for (int j = 0; @team.ent(j) != null; j++) {
                     @ent = @team.ent(j);
-                    if (ent.isGhosting() || @ent == @target)
+                    if (ent.isGhosting() || @ent == @target) {
                         continue;
+                    }
 
                     ent.client.addAward("1v" + attackerCount + "! You're on your own!");
                     @survivor = @ent;
@@ -513,27 +457,28 @@ class cCARound {
                 }
 
                 // console print for the team
-                for (
-                    int j = 0; @team.ent(j) != null; j++) {
+                for (int j = 0; @team.ent(j) != null; j++) {
                     @ent = @team.ent(j);
                     G_PrintMsg(ent, "1v" + attackerCount + "! " + survivor.client.name + " is on its own!\n");
                 }
                 
                 // ch : update last man standing count
-                if (target.team == TEAM_ALPHA && attackerCount > alpha_oneVS)
-                    alpha_oneVS = attackerCount; else if (target.team == TEAM_BETA && attackerCount > beta_oneVS)
+                if (target.team == TEAM_ALPHA && attackerCount > alpha_oneVS) {
+                    alpha_oneVS = attackerCount; 
+                } else if (target.team == TEAM_BETA && attackerCount > beta_oneVS) {
                     beta_oneVS = attackerCount;
+                }
             }
             
             // check for generic awards for the frag
-            if (attacker.team != target.team)
+            if (attacker.team != target.team) {
                 award_playerKilled(@target, @attacker, @inflictor);
+            }
         }
         
         // ch : add a round for victim
-        if (@target != null && @target.client != null)
+        if (@target != null && @target.client != null) {
             target.client.stats.addRound();
+        }
     }
 };
-
-cCARound caRound;

@@ -15,13 +15,12 @@ bool GT_Command(Client@ client, const String& cmdString, const String& argsStrin
         G_PrintMsg(client.getEnt(), response);
         return true;
     } else if (cmdString == "cvarinfo") {
-            GENERIC_CheatVarResponse(client, cmdString, argsString, argc);
-            return true;
-        } else if (cmdString == "fish") {
-            G_PrintMsg(client.getEnt(), client.getUserInfoKey("steam_id") + "\n");
-        
-            return true;
-        }
+        GENERIC_CheatVarResponse(client, cmdString, argsString, argc);
+        return true;
+    } else if (cmdString == "fish") {
+        G_PrintMsg(client.getEnt(), client.getUserInfoKey("steam_id") + "\n");
+        return true;
+    }
 
     return false;
 }
@@ -64,44 +63,34 @@ bool GT_UpdateBotStatus(Entity@ ent) {
     return true; // handled by the script
 }
 
-void GT_updateScore(Client@ client) {
-    if (@client != null) {
-        if (gametype.isInstagib)
-            client.stats.setScore(client.stats.frags + caRound.getPlayerBonusScore(client)); else
-            client.stats.setScore(int(client.stats.totalDamageGiven * 0.01) + caRound.getPlayerBonusScore(client));
-    }
-}
-
-// Some game actions trigger score events. These are events not related to killing
-// oponents, like capturing a flag
 // Warning: client can be null
 void GT_ScoreEvent(Client@ client, const String& score_event, const String& args) {
+    G_Print(client.name + ", " + score_event + ", " + args.getToken(0) + ", " + args.getToken(1) + "\n");
+
+    if (match.getState() == MATCH_STATE_PLAYTIME && @client != null) {
+        client.stats.setScore(int(client.stats.totalDamageGiven));
+    }
+
     if (score_event == "dmg") {
-        if (match.getState() == MATCH_STATE_PLAYTIME) {
-            GT_updateScore(client);
-        }
     } else if (score_event == "kill") {
-            Entity@ attacker = null;
+        Entity@ attacker = null;
 
-            if (@client != null)
-                @attacker = @client.getEnt();
+        if (@client != null) {
+            @attacker = @client.getEnt();
+        }
 
-            int arg1 = args.getToken(0).toInt();
-            int arg2 = args.getToken(1).toInt();
+        int arg1 = args.getToken(0).toInt();
+        int arg2 = args.getToken(1).toInt();
 
         // target, attacker, inflictor
-            caRound.playerKilled(G_GetEntity(arg1), attacker, G_GetEntity(arg2));
-
-            if (match.getState() == MATCH_STATE_PLAYTIME) {
-                GT_updateScore(client);
-            }
-        } else if (score_event == "award") {
-            } else if (score_event == "rebalance" || score_event == "shuffle") {
+        caRound.playerKilled(G_GetEntity(arg1), attacker, G_GetEntity(arg2));
+    } else if (score_event == "award") {
+    } else if (score_event == "rebalance" || score_event == "shuffle") {
 		// end round when in match
-                    if ((@client == null) && (match.getState() == MATCH_STATE_PLAYTIME)) {
-                        caRound.newRoundState(CA_ROUNDSTATE_ROUNDFINISHED);
-                    }	
-                }
+        if ((@client == null) && (match.getState() == MATCH_STATE_PLAYTIME)) {
+            caRound.newRoundState(CA_ROUNDSTATE_ROUNDFINISHED);
+        }	
+    }
 }
 
 // a player is being respawned. This can happen from several ways, as dying, changing team,
@@ -124,15 +113,16 @@ void GT_PlayerRespawn(Entity@ ent, int old_team, int new_team) {
 
         ent.client.inventoryClear();
 
-        for (
-            int i = 0;; i++) {
+        for (int i = 0;; i++) {
             token = itemList.getToken(i);
-            if (token.len() == 0)
+            if (token.len() == 0) {
                 break; // done
+            }
 
             Item@ item = @G_GetItemByName(token);
-            if (@item == null)
+            if (@item == null) {
                 continue;
+            }
 
             ent.client.inventoryGiveItem(item.tag);
 
@@ -146,16 +136,16 @@ void GT_PlayerRespawn(Entity@ ent, int old_team, int new_team) {
             }
         }
 
-        // give armor
-        ent.client.armor = 150;
+        ent.health = 250; // no armor, just health
 
         // select rocket launcher
         ent.client.selectWeapon(WEAP_ROCKETLAUNCHER);
     }
 
     // auto-select best weapon in the inventory
-    if (ent.client.pendingWeapon == WEAP_NONE)
+    if (ent.client.pendingWeapon == WEAP_NONE) {
         ent.client.selectWeapon(-1);
+    }
 
     ent.svflags |= SVF_FORCETEAM;
 
@@ -165,8 +155,9 @@ void GT_PlayerRespawn(Entity@ ent, int old_team, int new_team) {
 
 // Thinking function. Called each frame
 void GT_ThinkRules() {
-    if (match.scoreLimitHit() || match.timeLimitHit() || match.suddenDeathFinished())
+    if (match.scoreLimitHit() || match.timeLimitHit() || match.suddenDeathFinished()) {
         match.launchState(match.getState() + 1);
+    }
 
     GENERIC_Think();
 
@@ -180,13 +171,12 @@ void GT_ThinkRules() {
     alive[TEAM_ALPHA] = 0;
     alive[TEAM_BETA] = 0;
 
-    for (
-        int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++) {
+    for (int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++) {
         @team = @G_GetTeam(t);
-        for (
-            int i = 0; @team.ent(i) != null; i++) {
-            if (!team.ent(i).isGhosting())
+        for (int i = 0; @team.ent(i) != null; i++) {
+            if (!team.ent(i).isGhosting()) {
                 alive[t]++;
+            }
         }
     }
 
@@ -286,28 +276,28 @@ void GT_InitGametype() {
         // the config file doesn't exist or it's empty, create it
         config = "// '" + gametype.title + "' gametype configuration file\n"
             + "// This config will be executed each time the gametype is started\n"
-                + "\n\n// map rotation\n"
-                    + "set g_maplist \"wfca1\" // list of maps in automatic rotation\n"
-                        + "set g_maprotation \"0\"   // 0 = same map, 1 = in order, 2 = random\n"
-                            + "\n// game settings\n"
-                                + "set g_scorelimit \"11\"\n"
-                                    + "set g_timelimit \"0\"\n"
-                                        + "set g_warmup_timelimit \"1\"\n"
-                                            + "set g_match_extendedtime \"0\"\n"
-                                                + "set g_allow_falldamage \"0\"\n"
-                                                    + "set g_allow_selfdamage \"0\"\n"
-                                                        + "set g_allow_teamdamage \"0\"\n"
-                                                            + "set g_allow_stun \"0\"\n"
-                                                                + "set g_teams_maxplayers \"5\"\n"
-                                                                    + "set g_teams_allow_uneven \"0\"\n"
-                                                                        + "set g_countdown_time \"3\"\n"
-                                                                            + "set g_maxtimeouts \"1\" // -1 = unlimited\n"
-                                                                                + "\n// gametype settings\n"
-                                                                                    + "set g_ca_timelimit1v1 \"60\"\n"
-                                                                                        + "\n// classes settings\n"
-                                                                                            + "set g_noclass_inventory \"gb mg rg gl rl pg lg eb cells shells grens rockets plasma lasers bolts bullets\"\n"
-                                                                                                + "set g_class_strong_ammo \"1 75 15 20 40 150 150 15\" // GB MG RG GL RL PG LG EB\n"
-                                                                                                    + "\necho \"" + gametype.name + ".cfg executed\"\n";
+            + "\n\n// map rotation\n"
+            + "set g_maplist \"wfca1\" // list of maps in automatic rotation\n"
+            + "set g_maprotation \"0\"   // 0 = same map, 1 = in order, 2 = random\n"
+            + "\n// game settings\n"
+            + "set g_scorelimit \"11\"\n"
+            + "set g_timelimit \"0\"\n"
+            + "set g_warmup_timelimit \"1\"\n"
+            + "set g_match_extendedtime \"0\"\n"
+            + "set g_allow_falldamage \"0\"\n"
+            + "set g_allow_selfdamage \"0\"\n"
+            + "set g_allow_teamdamage \"0\"\n"
+            + "set g_allow_stun \"0\"\n"
+            + "set g_teams_maxplayers \"5\"\n"
+            + "set g_teams_allow_uneven \"0\"\n"
+            + "set g_countdown_time \"3\"\n"
+            + "set g_maxtimeouts \"1\" // -1 = unlimited\n"
+            + "\n// gametype settings\n"
+            + "set g_ca_timelimit1v1 \"60\"\n"
+            + "\n// classes settings\n"
+            + "set g_noclass_inventory \"gb mg rg gl rl pg lg eb cells shells grens rockets plasma lasers bolts bullets\"\n"
+            + "set g_class_strong_ammo \"1 75 15 20 40 150 150 15\" // GB MG RG GL RL PG LG EB\n"
+            + "\necho \"" + gametype.name + ".cfg executed\"\n";
 
         G_WriteFile("configs/server/gametypes/" + gametype.name + ".cfg", config);
         G_Print("Created default config file for '" + gametype.name + "'\n");
@@ -326,14 +316,6 @@ void GT_InitGametype() {
     gametype.hasChallengersQueue = false;
     gametype.maxPlayersPerTeam = 0;
 
-    gametype.ammoRespawn = 20;
-    gametype.armorRespawn = 25;
-    gametype.weaponRespawn = 15;
-    gametype.healthRespawn = 25;
-    gametype.powerupRespawn = 90;
-    gametype.megahealthRespawn = 20;
-    gametype.ultrahealthRespawn = 60;
-
     gametype.readyAnnouncementEnabled = false;
     gametype.scoreAnnouncementEnabled = false;
     gametype.countdownEnabled = false;
@@ -349,17 +331,14 @@ void GT_InitGametype() {
 	
     gametype.spawnpointRadius = 256;
 
-    if (gametype.isInstagib)
-        gametype.spawnpointRadius *= 2;
-
     // set spawnsystem type to instant while players join
-    for (
-        int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++)
+    for (int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++) {
         gametype.setTeamSpawnsystem(team, SPAWNSYSTEM_INSTANT, 0, 0, false);
+    }
 
     // define the scoreboard layout
-    G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "AVATAR Name Score Frags DG/DR Ping R");
-    G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%a l1 %n 112 %i 50 %i 40 %s 42 %l 38 %r l1");
+    G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "AVATAR Name Dmg K D A DG/DR Ping R");
+    G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%a l1 %n 112 %i 40 %i 20 %i 20 %i 20 %s 42 %l 38 %r l1");
 
     // add commands
     G_RegisterCommand("gametype");
@@ -371,11 +350,13 @@ void GT_InitGametype() {
 // select a spawning point for a player
 Entity@ GT_SelectSpawnPoint(Entity@ self) {
     if (caRound.state == CA_ROUNDSTATE_PREROUND) {
-        if (self.team == TEAM_ALPHA)
+        if (self.team == TEAM_ALPHA){
             return @caRound.alphaSpawn;
+        }
 
-        if (self.team == TEAM_BETA)
+        if (self.team == TEAM_BETA) {
             return @caRound.betaSpawn;
+        }
     }
 
     return GENERIC_SelectBestRandomSpawnPoint(self, "info_player_deathmatch");
@@ -393,17 +374,14 @@ String@ GT_ScoreboardMessage(uint maxlen) {
 
         // &t = team tab, team tag, team score (doesn't apply), team ping (doesn't apply)
         entry = "&t " + t + " " + team.stats.score + " " + team.ping + " ";
-        if (scoreboardMessage.len() + entry.len() < maxlen)
+        if (scoreboardMessage.len() + entry.len() < maxlen) {
             scoreboardMessage += entry;
+        }
 
         for (i = 0; @team.ent(i) != null; i++) {
             @ent = @team.ent(i);
 
             int playerID = (ent.isGhosting() && (match.getState() == MATCH_STATE_PLAYTIME)) ? -(ent.playerNum + 1) : ent.playerNum;
-
-            // int frags = ent.client.stats.frags;
-            // int deaths = ent.client.stats.deaths;
-            // float kd = ( deaths == 0) ? frags : float(frags) / float(deaths);
 
             int dmgGiven = ent.client.stats.totalDamageGiven;
             int dmgTaken = ent.client.stats.totalDamageReceived;
@@ -415,19 +393,20 @@ String@ GT_ScoreboardMessage(uint maxlen) {
                 dmgRatioStr = "^2" + formatFloat(dmgRatio, 2); // Green for >=1
             }
 
-
-            // "Name Score Frags DG/DR Ping R"
             entry = 
                 "&p " + playerID + " " +
                 playerID + " " +
                 ent.client.stats.score + " " + 
                 ent.client.stats.frags + " " + 
+                ent.client.stats.deaths + " " + 
+                0 + " " + // TODO: assists
                 dmgRatioStr + " " + 
                 ent.client.ping + " " + 
                 (ent.client.isReady() ? "1" : "0") + " ";
 
-            if (scoreboardMessage.len() + entry.len() < maxlen)
+            if (scoreboardMessage.len() + entry.len() < maxlen) {
                 scoreboardMessage += entry;
+            }
         }
     }
 
