@@ -10,7 +10,7 @@ class cCARound {
     int timelimit;
     int alpha_oneVS;
     int beta_oneVS;
-    GameStats gameStats();
+    GameStats gameStats;
 
     cCARound() {
         this.state = CA_ROUNDSTATE_NONE;
@@ -93,9 +93,6 @@ class cCARound {
         
         this.alpha_oneVS = 0;
         this.beta_oneVS = 0;
-
-        //this.allRoundStats = {};
-        this.lastRoundStats = {};
     }
 
     void endGame() {
@@ -110,12 +107,6 @@ class cCARound {
 
         this.newRoundState(CA_ROUNDSTATE_PREROUND);
         this.numRounds++;
-
-        //this.allRoundStats.insertLast(this.lastRoundStats);
-        this.lastRoundStats = {
-            { "round_winner", null },
-            { "teamStats", Dictionary = {} }
-        };
     }
 
     void newRoundState(int newState) {

@@ -1,3 +1,5 @@
+#import "/generic/matchstates";
+
 bool GT_Command(Client@ client, const String& cmdString, const String& argsString, int argc) {
     if (cmdString == "gametype") {
         String response = "";

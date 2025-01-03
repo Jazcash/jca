@@ -1,0 +1,329 @@
+// https://github.com/sashi0034/angel-lsp
+// https://github.com/TeamForbiddenLLC/warfork-qfusion
+// https://warforkwiki.com/index.php?title=Gametype_Scripting#Game_Types
+
+[BuiltinString]
+class String {
+    bool opEquals(const String& in other) const;
+    String(const String&in);
+}
+
+funcdef bool less(const ?&in a, const ?&in b);
+
+class array<T>{
+	uint length() const;
+	void resize(uint);
+	void reverse();
+	void insertAt(uint index, const T& in value);
+	void insertAt(uint index, const array<T>& arr);
+	void insertLast(const T& in);
+	void removeAt(uint index);
+	void removeLast();
+	void removeRange(uint start, uint count);
+	void sortAsc();
+	void sortAsc(uint startAt, uint count);
+	void sortDesc();
+	void sortDesc(uint startAt, uint count);
+	void sort(const less &in compareFunc, uint startAt = 0, uint count = uint(-1));
+	int find(const T& in);
+	int find(uint startAt, const T& in);
+	int findByRef(const T& in);
+	int findByRef(uint startAt, const T& in);
+}
+
+class Dictionary{
+	//Sets a key/value pair in the dictionary. If the key already exists, the value will be changed.
+	void set(const String &in key, ? &in value);
+	void set(const String &in key, int64 &in value);
+	void set(const String &in key, double &in value);
+	//Retrieves the value corresponding to the key. The methods return false if the key is not found, and in this case the value will maintain its default value based on the type.
+	bool get(const String &in key, ? &out value) const;
+	bool get(const String &in key, int64 &out value) const;
+	bool get(const String &in key, double &out value) const;
+	//This method returns an array with all of the existing keys in the dictionary. The order of the keys in the array is undefined.
+	array<String> @getKeys() const;
+	//Returns true if the key exists in the dictionary.
+	bool exists(const String &in key) const;
+	//Removes the key and the corresponding value from the dictionary. Returns false if the key wasn't found.
+	bool delete(const String &in key);
+	//Removes all entries in the dictionary.
+	void deleteAll();
+	//Returns true if the dictionary doesn't hold any entries.
+	bool isEmpty() const;
+	//Returns the number of keys in the dictionary.
+	uint getSize() const;
+}
+
+class Match {
+	void launchState (int state) const;
+	void startAutorecord () const;
+	void stopAutorecord () const;
+	bool scoreLimitHit () const;
+	bool timeLimitHit () const;
+	bool isTied () const;
+	bool checkExtendPlayTime () const;
+	bool suddenDeathFinished () const;
+	bool isPaused () const;
+	bool isWaiting () const;
+	bool isExtended () const;
+	uint duration () const;
+	uint startTime () const;
+	uint endTime () const;
+	int getState () const;
+	const String@ get_name() const;
+	const String@ getScore() const;
+	void set_name ( const String &in );
+	void setScore ( const String &in );
+	void setClockOverride ( uint milliseconds );
+}
+
+class Client {
+
+}
+
+class Entity {
+	String name;
+
+	void launchState(int state) const;
+	void startAutorecord() const;
+	void stopAutorecord() const;
+	bool scoreLimitHit() const;
+	bool timeLimitHit() const;
+	bool isTied() const;
+	bool checkExtendPlayTime() const;
+	bool suddenDeathFinished() const;
+	bool isPaused() const;
+	bool isWaiting() const;
+	bool isExtended() const;
+	uint duration() const;
+	uint startTime() const;
+	uint endTime() const;
+	int getState() const;
+	const String@ get_name() const;
+	const String@ getScore() const;
+	void set_name(const String &in);
+	void setScore(const String &in);
+	void setClockOverride(uint milliseconds);
+}
+
+class Team {
+
+}
+
+class Bot {
+
+}
+
+// CvarAddon.predefined
+
+// Flags for CVars (examples)
+const int CVAR_NONE         = 0;     // No special properties
+const int CVAR_READONLY     = 1;     // Read-only variable
+const int CVAR_ARCHIVE      = 2;     // Persistent across sessions
+const int CVAR_SERVER       = 4;     // Synchronized across the server
+
+class Cvar {
+	Cvar(const String&in name, const String&in, const uint cvarflags);
+	Cvar(const Cvar&in);
+
+	void reset();
+	void set(const String&in);
+	void set(float);
+	void set(int);
+	void set(double);
+	void set_modified(bool);
+	bool get_modified() const;
+	bool get_boolean() const;
+	int get_integer() const;
+	float get_value() const;
+	const String@ get_name() const;
+	const String@ get_string() const;
+	const String@ get_defaultString() const;
+	const String@ get_latchedString() const;
+};
+
+enum eCvarFlag {
+	CVAR_ARCHIVE = 0x1,      // set to cause it to be saved to vars.rc
+	CVAR_USERINFO = 0x2,     // added to userinfo  when changed
+	CVAR_SERVERINFO = 0x4,   // added to serverinfo when changed
+	CVAR_NOSET = 0x8,        // don't allow change from console at all
+	CVAR_LATCH = 0x10,       // but can be set from the command line
+	CVAR_LATCH_VIDEO = 0x20, // save changes until map restart
+	CVAR_LATCH_SOUND = 0x40, // save changes until video restart
+	CVAR_CHEAT = 0x80,       // will be reset to default unless cheats
+	CVAR_READONLY = 0x100   // don't allow changing by user, ever
+};
+
+class GametypeDesc {
+	String title;
+	String version;
+	String author;
+	String name;
+
+    uint spawnableItemsMask;
+    uint respawnableItemsMask;
+    uint dropableItemsMask;
+    uint pickableItemsMask;
+    bool isTeamBased;
+    bool isRace;
+    bool isTutorial;
+    bool inverseScore;
+    bool hasChallengersQueue;
+    bool hasChallengersRoulette;
+    int maxPlayersPerTeam;
+    int ammoRespawn;
+    int armorRespawn;
+    int weaponRespawn;
+    int healthRespawn;
+    int powerupRespawn;
+    int megahealthRespawn;
+    int ultrahealthRespawn;
+    bool readyAnnouncementEnabled;
+    bool scoreAnnouncementEnabled;
+    bool countdownEnabled;
+    bool mathAbortDisabled;
+    bool matchAbortDisabled;
+    bool shootingDisabled;
+    bool infiniteAmmo;
+    bool canForceModels;
+    bool canShowMinimap;
+    bool teamOnlyMinimap;
+    int spawnpointRadius;
+    bool customDeadBodyCam;
+    bool removeInactivePlayers;
+    bool mmCompatible;
+    uint numBots;
+    bool dummyBots;
+    uint forceTeamHumans;
+    uint forceTeamBots;
+    bool disableObituaries;
+
+	String@ get_name() const;
+	String@ get_title() const;
+	void set_title(const String&in);
+	const String@ get_version() const;
+	void set_version(const String&in);
+	const String@ get_author() const;
+	void set_author(const String&in);
+	const String@ get_manifest() const;
+	void setTeamSpawnsystem(int team, int spawnsystem, int wave_time, int wave_maxcount, bool deadcam);
+	bool get_isInstagib() const;
+	bool get_useSteamAuth() const;
+	bool get_hasFallDamage() const;
+	bool get_hasSelfDamage() const;
+	bool get_isInvidualGameType() const;
+}
+
+class Vec3 {
+	float x;
+	float y;
+	float z;
+
+	Vec3 &opAssign(Vec3 &in);
+	Vec3 &opAssign(int);
+	Vec3 &opAssign(float);
+	Vec3 &opAddAssign(Vec3 &in);
+	Vec3 &opSubAssign(Vec3 &in);
+	Vec3 &opMulAssign(Vec3 &in);
+	Vec3 &opXorAssign(Vec3 &in);
+	Vec3 &opMulAssign(int);
+	Vec3 &opMulAssign(float);
+	Vec3 opAdd(Vec3 &in) const;
+	Vec3 opSub(Vec3 &in) const;
+	float opMul(Vec3 &in) const;
+	Vec3 opMul(float) const;
+	Vec3 opMul_r(float) const;
+	Vec3 opMul(int) const;
+	Vec3 opMul_r(int) const;
+	Vec3 opXor(const Vec3 &in) const;
+	bool opEquals(const Vec3 &in) const;
+	void set(float x, float y, float z);
+	float length() const;
+	float normalize() const;
+	float distance(const Vec3 &in) const;
+	void angleVectors(Vec3 &out, Vec3 &out, Vec3 &out) const;
+	Vec3 toAngles() const;
+	Vec3 perpendicular() const;
+	void makeNormalVectors(Vec3 &out, Vec3 &out) const;
+}
+
+Entity @G_SpawnEntity( const String &in );
+const String @G_SpawnTempValue( const String &in );
+Entity @G_GetEntity( int entNum );
+Client @G_GetClient( int clientNum );
+Team @G_GetTeam( int team );
+Item @G_GetItem( int tag );
+Item @G_GetItemByName( const String &in name );
+Item @G_GetItemByClassname( const String &in name );
+array<Entity @> @G_FindInRadius( const Vec3 &in, float radius );
+array<Entity @> @G_FindByClassname( const String &in );
+void G_ResetLevel();
+void G_RemoveDeadBodies();
+void G_Items_RespawnByType( uint typeMask, int item_tag, float delay );
+void G_PrintMsg( Entity @, const String &in );
+void G_CenterPrintMsg( Entity @, const String &in );
+void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in );
+void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in );
+void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in, const String &in );
+void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in, const String &in, const String &in );
+void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in, const String &in, const String &in, const String &in );
+void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in, const String &in, const String &in, const String &in, const String &in );
+void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in, const String &in, const String &in, const String &in, const String &in, const String &in );
+void G_Sound( Entity @, int channel, int soundindex, float attenuation );
+void G_PositionedSound( const Vec3 &in, int channel, int soundindex, float attenuation );
+void G_GlobalSound( int channel, int soundindex );
+void G_LocalSound( Client @, int channel, int soundIndex );
+void G_AnnouncerSound( Client @, int soundIndex, int team, bool queued, Client @ );
+int G_DirToByte( const Vec3 &in origin );
+int G_PointContents( const Vec3 &in origin );
+bool G_InPVS( const Vec3 &in origin1, const Vec3 &in origin2 );
+bool G_WriteFile( const String &, const String & );
+bool G_AppendToFile( const String &, const String & );
+const String @G_LoadFile( const String & );
+int G_FileLength( const String & );
+void G_CmdExecute( const String & );
+const String @G_LocationName( const Vec3 &in origin );
+int G_LocationTag( const String & );
+const String @G_LocationName( int tag );
+void __G_CallTouch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags );
+void __G_CallUse( Entity @ent, Entity @other, Entity @activator );
+void __G_CallStop( Entity @ent );
+void __G_CallPain( Entity @ent, Entity @other, float kick, float damage );
+void __G_CallDie( Entity @ent, Entity @inflicter, Entity @attacker );
+int G_SkinIndex( const String &in );
+int G_ModelIndex( const String &in );
+int G_SoundIndex( const String &in );
+int G_ModelIndex( const String &in, bool pure );
+int G_SoundIndex( const String &in, bool pure );
+void G_PureFile( const String &in );
+void G_RegisterCommand( const String &in );
+void G_RegisterCallvote( const String &in, const String &in, const String &in, const String &in );
+void G_ConfigString( int index, const String &in );
+Entity @G_FireWeakBolt( const Vec3 &in origin, const Vec3 &in angles, int speed, int damage, int knockback, int stun, Entity @owner );
+void G_FireStrongBolt( const Vec3 &in origin, const Vec3 &in angles, int range, int damage, int knockback, int stun, Entity @owner );
+Entity @G_FirePlasma( const Vec3 &in origin, const Vec3 &in angles, int speed, int radius, int damage, int knockback, int stun, Entity @owner );
+Entity @G_FireRocket( const Vec3 &in origin, const Vec3 &in angles, int speed, int radius, int damage, int knockback, int stun, Entity @owner );
+Entity @G_FireGrenade( const Vec3 &in origin, const Vec3 &in angles, int speed, int radius, int damage, int knockback, int stun, Entity @owner );
+void G_FireRiotgun( const Vec3 &in origin, const Vec3 &in angles, int range, int spread, int count, int damage, int knockback, int stun, Entity @owner );
+void G_FireBullet( const Vec3 &in origin, const Vec3 &in angles, int range, int spread, int damage, int knockback, int stun, Entity @owner );
+Entity @G_FireBlast( const Vec3 &in origin, const Vec3 &in angles, int speed, int radius, int damage, int knockback, int stun, Entity @owner );
+const String @ML_GetMapByNum( int num );
+int G_GetDefaultColorCorrection();
+
+const uint levelTime;
+const uint frameTime;
+const uint realTime;
+const uint64 localTime;
+const int maxEntities;
+const int numEntities;
+const int maxClients;
+GametypeDesc gametype;
+Match match;
+
+const uint MATCH_STATE_NONE = 0;
+const uint MATCH_STATE_WARMUP = 1;
+const uint MATCH_STATE_COUNTDOWN = 2;
+const uint MATCH_STATE_PLAYTIME = 3;
+const uint MATCH_STATE_POSTMATCH = 4;
+const uint MATCH_STATE_WAITEXIT = 5;
+const uint MATCH_STATE_TOTA = 6;
