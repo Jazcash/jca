@@ -2,10 +2,50 @@
 // https://github.com/TeamForbiddenLLC/warfork-qfusion
 // https://warforkwiki.com/index.php?title=Gametype_Scripting#Game_Types
 
-[BuiltinString]
 class String {
-    bool opEquals(const String& in other) const;
-    String(const String&in);
+	String ();
+	String (const String &in);
+	String (int);
+	String (float);
+	String (double);
+	String &opAssign(const String &in);
+	String &opAssign(int);
+	String &opAssign(double);
+	String &opAssign(float);
+	uint8 &opIndex(uint);
+	const uint8 &opIndex(uint) const;
+	String &opAddAssign(const String &in);
+	String &opAddAssign(int);
+	String &opAddAssign(double);
+	String &opAddAssign(float);
+	String @opAdd(const String &in) const;
+	String @opAdd(int) const;
+	String @opAdd_r(int) const;
+	String @opAdd(double) const;
+	String @opAdd_r(double) const;
+	String @opAdd(float) const;
+	String @opAdd_r(float) const;
+	bool opEquals(const String &in) const;
+	uint len() const;
+	uint length() const;
+	bool empty() const;
+	String @tolower() const;
+	String @toupper() const;
+	String @trim() const;
+	String @removeColorTokens() const;
+	String @getToken(const uint) const;
+	int toInt() const;
+	float toFloat() const;
+	uint locate(const String &in, const uint) const;
+	String @substr(const uint start, const uint length) const;
+	String @subString(const uint start, const uint length) const;
+	String @substr(const uint start) const;
+	String @subString(const uint start) const;
+	String @replace(const String &in search, const String &in replace) const;
+	bool isAlpha() const;
+	bool isNumerical() const;
+	bool isNumeric() const;
+	bool isAlphaNumerical() const;
 }
 
 funcdef bool less(const ?&in a, const ?&in b);
@@ -32,25 +72,17 @@ class array<T>{
 }
 
 class Dictionary{
-	//Sets a key/value pair in the dictionary. If the key already exists, the value will be changed.
 	void set(const String &in key, ? &in value);
 	void set(const String &in key, int64 &in value);
 	void set(const String &in key, double &in value);
-	//Retrieves the value corresponding to the key. The methods return false if the key is not found, and in this case the value will maintain its default value based on the type.
 	bool get(const String &in key, ? &out value) const;
 	bool get(const String &in key, int64 &out value) const;
 	bool get(const String &in key, double &out value) const;
-	//This method returns an array with all of the existing keys in the dictionary. The order of the keys in the array is undefined.
 	array<String> @getKeys() const;
-	//Returns true if the key exists in the dictionary.
 	bool exists(const String &in key) const;
-	//Removes the key and the corresponding value from the dictionary. Returns false if the key wasn't found.
 	bool delete(const String &in key);
-	//Removes all entries in the dictionary.
 	void deleteAll();
-	//Returns true if the dictionary doesn't hold any entries.
 	bool isEmpty() const;
-	//Returns the number of keys in the dictionary.
 	uint getSize() const;
 }
 
@@ -83,7 +115,6 @@ class Client {
 
 class Entity {
 	String name;
-
 	void launchState(int state) const;
 	void startAutorecord() const;
 	void stopAutorecord() const;
@@ -114,18 +145,31 @@ class Bot {
 
 }
 
-// CvarAddon.predefined
-
-// Flags for CVars (examples)
-const int CVAR_NONE         = 0;     // No special properties
-const int CVAR_READONLY     = 1;     // Read-only variable
-const int CVAR_ARCHIVE      = 2;     // Persistent across sessions
-const int CVAR_SERVER       = 4;     // Synchronized across the server
+class Item {
+	const int tag;
+	const uint type;
+	const int flags;
+	const int quantity;
+	const int inventoryMax;
+	const int ammoTag;
+	const int weakAmmoTag;
+	const String @ get_classname () const;
+	const String @ get_name () const;
+	const String @ get_shortName () const;
+	const String @ get_model () const;
+	const String @ get_model2 () const;
+	const String @ get_icon () const;
+	const String @ get_simpleIcon () const;
+	const String @ get_pickupSound () const;
+	const String @ get_colorToken () const;
+	bool isPickable () const;
+	bool isUsable () const;
+	bool isDropable () const;
+}
 
 class Cvar {
 	Cvar(const String&in name, const String&in, const uint cvarflags);
 	Cvar(const Cvar&in);
-
 	void reset();
 	void set(const String&in);
 	void set(float);
@@ -159,7 +203,6 @@ class GametypeDesc {
 	String version;
 	String author;
 	String name;
-
     uint spawnableItemsMask;
     uint respawnableItemsMask;
     uint dropableItemsMask;
@@ -197,7 +240,6 @@ class GametypeDesc {
     uint forceTeamHumans;
     uint forceTeamBots;
     bool disableObituaries;
-
 	String@ get_name() const;
 	String@ get_title() const;
 	void set_title(const String&in);
@@ -218,12 +260,10 @@ class Vec3 {
 	float x;
 	float y;
 	float z;
-
 	Vec3();
 	Vec3(float x, float y, float z);
 	Vec3(float v);
 	Vec3(const Vec3 &in);
-
 	Vec3 &opAssign(Vec3 &in);
 	Vec3 &opAssign(int);
 	Vec3 &opAssign(float);
@@ -250,6 +290,24 @@ class Vec3 {
 	Vec3 toAngles() const;
 	Vec3 perpendicular() const;
 	void makeNormalVectors(Vec3 &out, Vec3 &out) const;
+}
+
+namespace StringUtils {
+	String @FormatInt(int64 val, const String &in options, uint width = 0);
+	String @FormatFloat(double val, const String &in options, uint width = 0, uint precision = 0);
+	String @Format(const String &in format, const String &in arg1);
+	String @Format(const String &in format, const String &in arg1, const String &in arg2);
+	String @Format(const String &in format, const String &in arg1, const String &in arg2, const String &in arg3);
+	String @Format(const String &in format, const String &in arg1, const String &in arg2, const String &in arg3, const String &in arg4);
+	String @Format(const String &in format, const String &in arg1, const String &in arg2, const String &in arg3, const String &in arg4, const String &in arg5);
+	String @Format(const String &in format, const String &in arg1, const String &in arg2, const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6);
+	String @Format(const String &in format, const String &in arg1, const String &in arg2, const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7);
+	String @Format(const String &in format, const String &in arg1, const String &in arg2, const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7, const String &in arg8);
+	array<String @> @Split(const String &in string, const String &in delimiter);
+	String @Join(array<String @> &in, const String &in delimiter);
+	uint Strtol(const String &in string, uint base);
+	String @FromCharCode(uint charCode);
+	String @FromCharCode(array<uint> &in charCodes);
 }
 
 Entity @G_SpawnEntity( const String &in );
@@ -315,6 +373,43 @@ Entity @G_FireBlast( const Vec3 &in origin, const Vec3 &in angles, int speed, in
 const String @ML_GetMapByNum( int num );
 int G_GetDefaultColorCorrection();
 
+int abs( int x );
+double abs( double x );
+double log( double x );
+double pow( double x, double y );
+double cos( double x );
+double sin( double x );
+double tan( double x );
+double acos( double x );
+double asin( double x );
+double atan( double x );
+double atan2( double x, double y );
+double sqrt( double x );
+double ceil( double x );
+double floor( double x );
+double random();
+double brandom( double min, double max );
+int rand();
+
+const uint MATCH_STATE_NONE;
+const uint MATCH_STATE_WARMUP;
+const uint MATCH_STATE_COUNTDOWN;
+const uint MATCH_STATE_PLAYTIME;
+const uint MATCH_STATE_POSTMATCH;
+const uint MATCH_STATE_WAITEXIT;
+const uint MATCH_STATE_TOTA;
+
+const uint TEAM_SPECTATOR;
+const uint TEAM_PLAYERS;
+const uint TEAM_ALPHA;
+const uint TEAM_BETA;
+const uint GS_MAX_TEAMS;
+
+const uint SPAWNSYSTEM_INSTANT;
+const uint SPAWNSYSTEM_WAVES;
+const uint SPAWNSYSTEM_HOLD;
+const uint SPAWNSYSTEM_TOTA;
+
 const uint levelTime;
 const uint frameTime;
 const uint realTime;
@@ -322,13 +417,13 @@ const uint64 localTime;
 const int maxEntities;
 const int numEntities;
 const int maxClients;
+
 GametypeDesc gametype;
 Match match;
 
-const uint MATCH_STATE_NONE = 0;
-const uint MATCH_STATE_WARMUP = 1;
-const uint MATCH_STATE_COUNTDOWN = 2;
-const uint MATCH_STATE_PLAYTIME = 3;
-const uint MATCH_STATE_POSTMATCH = 4;
-const uint MATCH_STATE_WAITEXIT = 5;
-const uint MATCH_STATE_TOTA = 6;
+String formatInt(int64 val, const String &in options = "", uint width = 0);
+String formatUInt(uint64 val, const String &in options = "", uint width = 0);
+String formatFloat(double val, const String &in options = "", uint width = 0, uint precision = 0);
+int64 parseInt(const String &in, uint base = 10, uint &out byteCount = 0);
+uint64 parseUInt(const String &in, uint base = 10, uint &out byteCount = 0);
+double parseFloat(const String &in, uint &out byteCount = 0);

@@ -1,5 +1,3 @@
-#import "/generic/matchstates";
-
 bool GT_Command(Client@ client, const String& cmdString, const String& argsString, int argc) {
     if (cmdString == "gametype") {
         String response = "";
@@ -295,10 +293,10 @@ void GT_InitGametype() {
             + "set g_countdown_time \"3\"\n"
             + "set g_maxtimeouts \"1\" // -1 = unlimited\n"
             + "\n// gametype settings\n"
-            + "set g_ca_timelimit1v1 \"60\"\n"
+            + "set g_ca_timelimit1v1 \""+g_ca_timelimit1v1.integer+"\"\n"
             + "\n// classes settings\n"
-            + "set g_noclass_inventory \"gb mg rg gl rl pg lg eb cells shells grens rockets plasma lasers bolts bullets\"\n"
-            + "set g_class_strong_ammo \"1 75 15 20 40 150 150 15\" // GB MG RG GL RL PG LG EB\n"
+            + "set g_noclass_inventory \"" + g_noclass_inventory.string + "\"\n"
+            + "set g_class_strong_ammo \"" + g_class_strong_ammo.string + "\" // GB MG RG GL RL PG LG EB\n"
             + "\necho \"" + gametype.name + ".cfg executed\"\n";
 
         G_WriteFile("configs/server/gametypes/" + gametype.name + ".cfg", config);
