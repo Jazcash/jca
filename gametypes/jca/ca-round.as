@@ -376,8 +376,7 @@ class cCARound {
         if (@target != null && @target.client != null && @attacker != null && @attacker.client != null) {
             G_PrintMsg(target, "You were fragged by " + attacker.client.name + "\n");
 
-            // if the attacker is the only remaining player on the team,
-            // report number or remaining enemies
+            // if the attacker is the only remaining player on the team, report number of remaining enemies
 
             int attackerCount = 0, targetCount = 0;
 
