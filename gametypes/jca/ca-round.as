@@ -10,7 +10,7 @@ class cCARound {
     int timelimit;
     int alpha_oneVS;
     int beta_oneVS;
-    GameStats gameStats;
+    GameStats@ gameStats;
 
     cCARound() {
         this.state = CA_ROUNDSTATE_NONE;

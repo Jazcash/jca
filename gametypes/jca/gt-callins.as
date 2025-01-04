@@ -35,14 +35,14 @@ bool GT_UpdateBotStatus(Entity@ ent) {
     Bot@ bot;
 
     @bot = @ent.client.getBot();
-    if (@bot == null)
+    if (@bot == null) {
         return false;
+    }
 
     float offensiveStatus = GENERIC_OffensiveStatus(ent);
 
     // loop all the goal entities
-    for (
-        int i = AI::GetNextGoal(AI::GetRootGoal()); i != AI::GetRootGoal(); i = AI::GetNextGoal(i)) {
+    for (int i = AI::GetNextGoal(AI::GetRootGoal()); i != AI::GetRootGoal(); i = AI::GetNextGoal(i)) {
         @goal = @AI::GetGoalEntity(i);
 
         // by now, always full-ignore not solid entities

@@ -110,7 +110,71 @@ class Match {
 }
 
 class Client {
+	Stats stats;
+	const bool connecting;
+	const bool multiview;
+	const bool tv;
+	int team;
+	const int hand;
+	bool isOperator;
+	const uint queueTimeStamp;
+	int muted;
+	float armor;
+	const bool chaseActive;
+	int chaseTarget;
+	bool chaseTeamonly;
+	int chaseFollowMode;
+	const bool coach;
+	const int ping;
+	const int16 weapon;
+	const int16 pendingWeapon;
+	bool takeStun;
+	uint lastActivity;
+	const uint uCmdTimeStamp;
+    const uint8 buttons;
 
+	int get_playerNum() const;
+	bool isReady() const;
+	bool isBot() const;
+	Bot@ getBot() const;
+	int state() const;
+	void respawn( bool ghost );
+	void clearPlayerStateEvents();
+	const String@ get_name() const;
+	const String@ get_clanName() const;
+	const String@ getMMLogin() const;
+	Entity@ getEnt() const;
+	int inventoryCount( int tag ) const;
+	void inventorySetCount( int tag, int count );
+	void inventoryGiveItem( int tag, int count );
+	void inventoryGiveItem( int tag );
+	void inventoryClear();
+	bool canSelectWeapon( int tag ) const;
+	void selectWeapon( int tag );
+	void addAward( const String &in );
+	void addMetaAward( const String &in );
+	void execGameCommand( const String &in );
+	void setHUDStat( int stat, int value );
+	int getHUDStat( int stat ) const;
+	void set_pmoveFeatures( uint bitmask );
+	void set_pmoveMaxSpeed( float speed );
+	void set_pmoveJumpSpeed( float speed );
+	void set_pmoveDashSpeed( float speed );
+	uint get_pmoveFeatures() const;
+	uint get_pressedKeys() const;
+	float get_pmoveMaxSpeed() const;
+	float get_pmoveJumpSpeed() const;
+	float get_pmoveDashSpeed() const;
+	const String@ getUserInfoKey( const String &in ) const;
+	void printMessage( const String &in );
+	void chaseCam( const String@, bool teamOnly );
+	void set_chaseActive( const bool active );
+	bool get_chaseActive() const ;
+	void newRaceRun( int numSectors );
+	void setRaceTime( int sector, uint time );
+	void setHelpMessage( uint msg );
+	void setQuickMenuItems( const String &in );
+    void dropClient( const String &in );
 }
 
 class Entity {
@@ -137,8 +201,45 @@ class Entity {
 	void setClockOverride(uint milliseconds);
 }
 
-class Team {
+class Stats {
+	const int score;
+	const int deaths;
+	const int frags;
+	const int suicides;
+	const int teamFrags;
+	const int awards;
+	const int totalDamageGiven;
+	const int totalDamageReceived;
+	const int totalTeamDamageGiven;
+	const int totalTeamDamageReceived;
+	const int healthTaken;
+	const int armorTaken;
+	
+	void setScore ( int i );
+	void addScore ( int i );
+	void addRound ();
+	void clear ();
+	int accuracyShots ( int ammo ) const;
+	int accuracyHits ( int ammo ) const;
+	int accuracyHitsDirect ( int ammo ) const;
+	int accuracyHitsAir ( int ammo ) const;
+	int accuracyDamage ( int ammo ) const;
+}
 
+class Team {
+	Stats@ stats;
+	const int numPlayers;
+	const int ping;
+	const bool hasCoach;
+	Entity@ ent ( int index );
+	const String@ get_name () const;
+	const String@ get_defaultName () const;
+	void set_name ( const String &in );
+	bool isLocked () const;
+	bool lock () const;
+	bool unlock () const;
+	void clearInvites ();
+	int team () const;
 }
 
 class Bot {
@@ -153,15 +254,15 @@ class Item {
 	const int inventoryMax;
 	const int ammoTag;
 	const int weakAmmoTag;
-	const String @ get_classname () const;
-	const String @ get_name () const;
-	const String @ get_shortName () const;
-	const String @ get_model () const;
-	const String @ get_model2 () const;
-	const String @ get_icon () const;
-	const String @ get_simpleIcon () const;
-	const String @ get_pickupSound () const;
-	const String @ get_colorToken () const;
+	const String@ get_classname () const;
+	const String@ get_name () const;
+	const String@ get_shortName () const;
+	const String@ get_model () const;
+	const String@ get_model2 () const;
+	const String@ get_icon () const;
+	const String@ get_simpleIcon () const;
+	const String@ get_pickupSound () const;
+	const String@ get_colorToken () const;
 	bool isPickable () const;
 	bool isUsable () const;
 	bool isDropable () const;
@@ -184,6 +285,10 @@ class Cvar {
 	const String@ get_string() const;
 	const String@ get_defaultString() const;
 	const String@ get_latchedString() const;
+	int integer;
+	float value;
+	bool boolean;
+	String@ string;
 };
 
 enum eCvarFlag {
@@ -240,6 +345,7 @@ class GametypeDesc {
     uint forceTeamHumans;
     uint forceTeamBots;
     bool disableObituaries;
+	String@ manifest;
 	String@ get_name() const;
 	String@ get_title() const;
 	void set_title(const String&in);
@@ -320,6 +426,7 @@ Item @G_GetItemByName( const String &in name );
 Item @G_GetItemByClassname( const String &in name );
 array<Entity @> @G_FindInRadius( const Vec3 &in, float radius );
 array<Entity @> @G_FindByClassname( const String &in );
+void G_RemoveAllProjectiles();
 void G_ResetLevel();
 void G_RemoveDeadBodies();
 void G_Items_RespawnByType( uint typeMask, int item_tag, float delay );
