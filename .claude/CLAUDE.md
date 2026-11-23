@@ -60,3 +60,8 @@ The repo lives at `~/warfork/jca`. The dedicated server is at `~/warfork/server`
 - Stats event log: `~/.local/share/warfork-2.1/basewf/stats/jca-events.jsonl`, append-only. jazcash.com tails it into SQLite (`~/jca-data/jca.db`). If you change the line format, bump `STATS_VERSION` and update the ingester. Live player data: never truncate or rewrite it.
 - Ratings data: `~/.local/share/warfork-2.1/basewf/ratings/jca.txt` (write directory). Format, one player per line: `<steam_id> <mu> <sigma> <rounds> <name>`. This is live player data, so don't delete or overwrite it without asking.
 - Restarting the service or deploying disconnects players on a live public server. Confirm with the user before doing either.
+
+# Useful links
+
+Warfork Gametypes: https://github.com/Warfork/warfork-gametypes
+Warfork Engine: https://github.com/Warfork/warfork-qfusion
