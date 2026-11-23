@@ -158,7 +158,7 @@ void GT_PlayerRespawn(Entity@ ent, int old_team, int new_team) {
             }
         }
 
-        ent.health = 250; // no armor, just health
+        ent.health = 300; // no armor, just health (~equivalent to 100hp + 150ra)
 
         // select rocket launcher
         ent.client.selectWeapon(WEAP_ROCKETLAUNCHER);
