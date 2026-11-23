@@ -9,6 +9,7 @@ JCA is a custom **gametype for Warfork**, a Quake-style arena FPS built on the q
 - No armor. Players spawn with health only (`ent.health` in `GT_PlayerRespawn`, [gt-callins.as](../gametypes/jca/gt-callins.as)). The current value is 300 (about 100hp + 150ra).
 - Assists: any damage to an enemy who later dies in the same round counts, unless you got the kill ([assists.as](../gametypes/jca/assists.as)).
 - Custom scoreboard columns: score, kills, deaths, assists, damage ratio (red below 1, green at 1 or above), MVPs (most damage in a round, [mvp.as](../gametypes/jca/mvp.as)), skill rating and ping (`GT_ScoreboardMessage`). The column layout is declared in `GT_InitGametype`.
+- Scoreboard stats survive team changes and rebalance/shuffle. The engine zeroes a client's stats on every team change (and rebalance zeroes everyone it doesn't move), and the script can't write frags/deaths/damage back (only `setScore`). [stats-carry.as](../gametypes/jca/stats-carry.as) notices the drop and keeps a carried-over total that the scoreboard (and score = damage given) adds on top. Assists/MVPs just aren't reset; only the per-round data is (`clearRound`/`newRound`). Engine per-weapon accuracy counters are still wiped.
 - The killer's HP isn't shown on death.
 - OpenSkill (Weng-Lin Bradley-Terry) per-round ratings, plus `callvote rebalance` ([ratings.as](../gametypes/jca/ratings.as)). Tuning constants and the reasoning behind them are commented at the top of that file.
 - Countdown ghosting: `PMFEAT_GHOSTMOVE` during PREROUND, cleared once a player isn't overlapping anyone ([join-rules.as](../gametypes/jca/join-rules.as)). Player-vs-player blocking is decided in pmove, which also runs on clients, so teammate-only phasing isn't possible from the server.
@@ -32,6 +33,7 @@ gametypes/
     ratings.as      RatingSystem: OpenSkill maths, persistence to ratings/jca.txt, rebalance vote
     assists.as      AssistTracker
     mvp.as          MvpTracker (most damage dealt per round)
+    stats-carry.as  StatsCarry: keeps kills/deaths/damage across the engine's stat wipes
     stats.as        StatsLogger: per-round/match stats appended as JSON lines to stats/jca-events.jsonl
                     (consumed by ~/jazcash.com, see server/utils/jca/ingest.ts there)
     utils.as        Warmup/countdown setup, formatFloat

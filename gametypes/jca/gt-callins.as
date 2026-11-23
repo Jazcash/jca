@@ -74,7 +74,7 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
     G_Print((@client != null ? client.name : "(world)") + ", " + score_event + ", " + args + "\n");
 
     if (match.getState() == MATCH_STATE_PLAYTIME && @client != null) {
-        client.stats.setScore(int(client.stats.totalDamageGiven));
+        client.stats.setScore(statsCarry.damageGiven(client));
     }
 
     if (score_event == "dmg") {
@@ -122,10 +122,14 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
             teamManager.clientChanged(client);
             assists.reset(client.playerNum);
             mvp.reset(client.playerNum);
+            statsCarry.reset(client); // the slot may be reused by someone else
         }
     } else if (score_event == "rebalance" || score_event == "shuffle") {
-        assists.resetAll(); // the engine clears everyone's scores
-        mvp.resetAll();
+        // The engine has wiped everyone's stats; statsCarry keeps kills, deaths and damage.
+        // Assist/MVP totals are kept, only this (cancelled) round's data is dropped,
+        // so nobody gets an MVP for it.
+        assists.newRound();
+        mvp.newRound();
         // the engine has already rebalanced by score; redo it by rating instead
         if (score_event == "rebalance" && @client == null) {
             ratings.balanceTeams();
@@ -144,8 +148,9 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
 // being moved to ghost state, be placed in respawn queue, being spawned from spawn queue, etc
 void GT_PlayerRespawn(Entity@ ent, int old_team, int new_team) {
     if (old_team != new_team) {
-        assists.reset(ent.playerNum); // the engine clears scores on team change
-        mvp.reset(ent.playerNum);
+        // totals carry over (see stats-carry.as), but this round's links don't
+        assists.clearRound(ent.playerNum);
+        mvp.clearRound(ent.playerNum);
     }
 
     pingLimit.playerRespawned(ent, old_team, new_team);
@@ -215,6 +220,8 @@ void GT_ThinkRules() {
     }
 
     GENERIC_Think();
+
+    statsCarry.syncAll(); // must run before anything can wipe this frame's stats
 
     pingLimit.think();
     spawnGhosting.think();
@@ -455,8 +462,9 @@ String@ GT_ScoreboardMessage(uint maxlen) {
 
             int playerID = (ent.isGhosting() && (match.getState() == MATCH_STATE_PLAYTIME)) ? -(ent.playerNum + 1) : ent.playerNum;
 
-            int dmgGiven = ent.client.stats.totalDamageGiven;
-            int dmgTaken = ent.client.stats.totalDamageReceived;
+            // include stats from before the engine's last wipe (team change, rebalance)
+            int dmgGiven = statsCarry.damageGiven(ent.client);
+            int dmgTaken = statsCarry.damageTaken(ent.client);
             float dmgRatio = (dmgTaken == 0) ? float(dmgGiven) : float(dmgGiven) / float(dmgTaken);
             String dmgRatioStr;
             if (dmgRatio < 1.0) {
@@ -469,8 +477,8 @@ String@ GT_ScoreboardMessage(uint maxlen) {
                 "&p " + playerID + " " +
                 playerID + " " +
                 ent.client.stats.score + " " + 
-                ent.client.stats.frags + " " + 
-                ent.client.stats.deaths + " " + 
+                statsCarry.frags(ent.client) + " " +
+                statsCarry.deaths(ent.client) + " " +
                 assists.get(ent.playerNum) + " " +
                 dmgRatioStr + " " + 
                 mvp.get(ent.playerNum) + " " +

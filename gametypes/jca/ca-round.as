@@ -89,6 +89,7 @@ class cCARound {
 
         assists.resetAll();
         mvp.resetAll();
+        statsCarry.resetAll(); // after the stats.clear() above, or it would look like a wipe
         statsLog.matchStarted();
 
         this.numRounds = 0;

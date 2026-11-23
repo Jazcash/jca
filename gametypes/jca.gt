@@ -15,6 +15,7 @@ jca/stats.as;
 jca/ratings.as;
 jca/assists.as;
 jca/mvp.as;
+jca/stats-carry.as;
 jca/join-rules.as;
 jca/teams.as;
 jca/welcome.as;

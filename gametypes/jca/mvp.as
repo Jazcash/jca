@@ -25,6 +25,14 @@ class MvpTracker {
         this.roundDamage[playerNum] = 0;
     }
 
+    // Drop this player's damage for the current round, keeping their MVP total.
+    void clearRound(int playerNum) {
+        if (playerNum < 0 || playerNum >= maxClients) {
+            return;
+        }
+        this.roundDamage[playerNum] = 0;
+    }
+
     void resetAll() {
         for (int i = 0; i < maxClients; i++) {
             this.mvps[i] = 0;

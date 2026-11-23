@@ -39,6 +39,20 @@ class AssistTracker {
         }
     }
 
+    // Forget who this player damaged / was damaged by this round, but keep their
+    // assist total. For team changes: old enemies are now teammates.
+    void clearRound(int playerNum) {
+        if (playerNum < 0 || playerNum >= maxClients) {
+            return;
+        }
+
+        this.dead[playerNum] = false;
+        for (int i = 0; i < maxClients; i++) {
+            this.damagedBy[playerNum][i] = false;
+            this.damagedBy[i][playerNum] = false;
+        }
+    }
+
     void resetAll() {
         for (int i = 0; i < maxClients; i++) {
             this.assists[i] = 0;
