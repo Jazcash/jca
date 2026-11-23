@@ -4,8 +4,8 @@ The JCA gametype for Warfork is the standard Clan Arena experience with few nota
 
 - Armor is removed, total health is 300 (roughly 100 HP + 150 armor in stock CA)
 - Scoreboard shows total damage dealt, kills, deaths, assists, damage given/taken ratio, MVPs and skill rating. These stay for the whole match: a team change, `callvote rebalance` or `callvote shuffle` no longer resets them
-- MVP: at the end of each round, whoever dealt the most damage to enemies that round gets an MVP (ties all get one), announced in chat
-- At the start of each round, chat shows each team's total Skill (the sum of its players' Skill column)
+- MVP: at the end of each round, whoever on each team dealt the most damage to enemies that round gets an MVP, so each team has its own MVP (ties all get one), announced in chat
+- At the start of each round, chat shows the rating model's predicted win chance for the stronger team, e.g. "Alpha is 60% favoured"
 - An assist is any damage dealt to an enemy who dies later in the same round, if you didn't get the kill
 - Killer's HP is no longer shown upon your death
 - Players are rated per round and their rating is shown in the scoreboard (Skill column)

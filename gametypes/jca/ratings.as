@@ -472,26 +472,39 @@ class RatingSystem {
         this.save();
     }
 
-    // Scoreboard text for a player's rating.
-    // Sum of the team's displayed Skill values (unrated players count as 0).
-    int teamSkill(int teamNum) {
-        int total = 0;
-        Team@ team = @G_GetTeam(teamNum);
-        for (int j = 0; @team.ent(j) != null; j++) {
-            PlayerRating@ r = this.find(this.steamIdOf(team.ent(j).client));
-            if (@r != null) {
-                total += this.displayValue(r);
+    // Printed to everyone at the start of each round: the model's predicted win
+    // chance for the stronger team (same maths as the rating update).
+    void printTeamSkills() {
+        array<double> mu(GS_MAX_TEAMS);
+        array<double> sigmaSq(GS_MAX_TEAMS);
+        for (int t = TEAM_ALPHA; t <= TEAM_BETA; t++) {
+            mu[t] = 0;
+            sigmaSq[t] = 0;
+            Team@ team = @G_GetTeam(t);
+            for (int j = 0; @team.ent(j) != null; j++) {
+                Client@ client = @team.ent(j).client;
+                if (@client != null) {
+                    mu[t] += this.muOf(client);
+                    sigmaSq[t] += this.sigmaSqOf(client);
+                }
             }
         }
-        return total;
+        if (sigmaSq[TEAM_ALPHA] == 0 || sigmaSq[TEAM_BETA] == 0) {
+            return;
+        }
+
+        double pAlpha = this.winChance(mu[TEAM_ALPHA], sigmaSq[TEAM_ALPHA], mu[TEAM_BETA], sigmaSq[TEAM_BETA]);
+        int favoured = (pAlpha >= 0.5) ? TEAM_ALPHA : TEAM_BETA;
+        int percent = rint(100.0 * ((favoured == TEAM_ALPHA) ? pAlpha : 1.0 - pAlpha));
+        if (percent <= 50) {
+            G_PrintMsg(null, "Teams are evenly matched\n");
+        } else {
+            G_PrintMsg(null, G_GetTeam(favoured).name + S_COLOR_WHITE + " is " + S_COLOR_YELLOW + percent + "%"
+                + S_COLOR_WHITE + " favoured\n");
+        }
     }
 
-    // Printed to everyone at the start of each round.
-    void printTeamSkills() {
-        G_PrintMsg(null, G_GetTeam(TEAM_ALPHA).name + S_COLOR_WHITE + " Skill: " + S_COLOR_YELLOW + this.teamSkill(TEAM_ALPHA)
-            + S_COLOR_WHITE + " vs " + G_GetTeam(TEAM_BETA).name + S_COLOR_WHITE + " Skill: " + S_COLOR_YELLOW + this.teamSkill(TEAM_BETA) + "\n");
-    }
-
+    // Scoreboard text for a player's rating.
     String scoreboardValue(Client@ client) {
         String steamId = this.steamIdOf(client);
         if (steamId.empty()) {
