@@ -65,15 +65,19 @@ bool GT_UpdateBotStatus(Entity@ ent) {
 
 // Warning: client can be null
 void GT_ScoreEvent(Client@ client, const String& score_event, const String& args) {
-    G_Print((@client != null ? client.name : "(world)") + ", " + score_event + ", " + args.getToken(0) + ", " + args.getToken(1) + "\n");
+    G_Print((@client != null ? client.name : "(world)") + ", " + score_event + ", " + args + "\n");
 
     if (match.getState() == MATCH_STATE_PLAYTIME && @client != null) {
         client.stats.setScore(int(client.stats.totalDamageGiven));
     }
 
     if (score_event == "dmg") {
-        if (caRound.state == CA_ROUNDSTATE_ROUND && @client != null) {
-            assists.damaged(G_GetEntity(args.getToken(0).toInt()), client.getEnt());
+        // args: target entity, damage, attacker entity
+        if (caRound.state == CA_ROUNDSTATE_ROUND) {
+            if (@client != null) {
+                assists.damaged(G_GetEntity(args.getToken(0).toInt()), client.getEnt());
+            }
+            statsLog.damaged(G_GetEntity(args.getToken(0).toInt()), client, args.getToken(1).toFloat());
         }
     } else if (score_event == "kill") {
         Entity@ attacker = null;
@@ -82,17 +86,22 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
             @attacker = @client.getEnt();
         }
 
+        // args: target, inflictor, attacker entities, means of death
         int arg1 = args.getToken(0).toInt();
         int arg2 = args.getToken(1).toInt();
 
         if (caRound.state == CA_ROUNDSTATE_ROUND) {
             assists.killed(G_GetEntity(arg1), attacker);
+            statsLog.killed(G_GetEntity(arg1), attacker, args.getToken(3).toInt());
         }
 
         // target, attacker, inflictor
         caRound.playerKilled(G_GetEntity(arg1), attacker, G_GetEntity(arg2));
     } else if (score_event == "award") {
     } else if (score_event == "connect" || score_event == "disconnect") {
+        if (score_event == "disconnect") {
+            statsLog.playerLeft(client); // before assists.reset, it reads their assists
+        }
         if (@client != null) {
             assists.reset(client.playerNum);
         }
@@ -106,6 +115,7 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
 		// end round when in match
         if ((@client == null) && (match.getState() == MATCH_STATE_PLAYTIME)) {
             ratings.roundCancelled(); // teams changed mid-round, the result means nothing
+            statsLog.roundCancelled();
             caRound.newRoundState(CA_ROUNDSTATE_ROUNDFINISHED);
         }	
     }
@@ -274,6 +284,7 @@ void GT_MatchStateStarted() {
 
 // the gametype is shutting down cause of a match restart or map change
 void GT_Shutdown() {
+    statsLog.matchEnded(false);
 }
 
 // The map entities have just been spawned. The level is initialized for
@@ -367,6 +378,8 @@ void GT_InitGametype() {
     // add commands
     G_RegisterCommand("gametype");
     G_RegisterCommand("fish");
+
+    statsLog.mapName = Cvar("mapname", "", 0).string;
 
     G_Print("Gametype '" + gametype.title + "' initialized\n");
 }

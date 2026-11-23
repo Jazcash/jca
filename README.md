@@ -2,7 +2,7 @@
 
 The JCA gametype for Warfork is the standard Clan Arena experience with few notable differences:
 
-- Armor is removed, total health is 250
+- Armor is removed, total health is 300 (roughly 100 HP + 150 armor in stock CA)
 - Scoreboard shows total damage dealt, kills, deaths, assists, damage given/taken ratio and skill rating
 - An assist is any damage dealt to an enemy who dies later in the same round, if you didn't get the kill
 - Killer's HP is no longer shown upon your death
@@ -23,3 +23,11 @@ Every round updates each player's rating with the Weng-Lin (OpenSkill) Bradley-T
 - Ratings are saved after every rated round to `ratings/jca.txt` in the server's write directory (e.g. `~/.local/share/warfork-2.1/basewf/`), one line per player: `<steam_id> <mu> <sigma> <rounds> <name>`.
 
 Tuning constants are at the top of `gametypes/jca/ratings.as`.
+## Player Stats
+
+Every round the server also appends a line of JSON to `stats/jca-events.jsonl` in the write directory, which jazcash.com reads to show the leaderboard and player profiles at [jazcash.com/jca](https://jazcash.com/jca).
+
+- Only rounds played during a match are recorded, not warmup. Like ratings, rounds with bots and players without a Steam ID are skipped.
+- Each round records, per player: name, team, kills, deaths, assists, damage dealt and taken, whether they survived or won a clutch (last one alive on their team against 2 or more), rating before and after, who they killed, and per-weapon shots, hits, damage and kills.
+- Match start and end are recorded too, with the final score and who was on each team at the end. Players who leave before the end count as having abandoned the match.
+- The file is only ever appended to. It is the source of truth: the website's database can be rebuilt from it at any time.

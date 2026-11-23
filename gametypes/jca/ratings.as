@@ -71,8 +71,14 @@ class RatingSystem {
     array<RoundParticipant@> participants;
     double baseline; // average mu, recalculated on load so values stay stable during a map
 
+    // Outcome of the last roundFinished(), for the stats log.
+    double lastWinChance; // alpha's predicted win chance, -1 if not computed
+    bool lastRated;       // ratings actually changed
+
     RatingSystem() {
         this.baseline = RATING_MU;
+        this.lastWinChance = -1;
+        this.lastRated = false;
     }
 
     int displayValue(PlayerRating@ r) {
@@ -355,6 +361,9 @@ class RatingSystem {
 
     // winningTeam is TEAM_ALPHA, TEAM_BETA, or -1 for a draw.
     void roundFinished(int winningTeam) {
+        this.lastWinChance = -1;
+        this.lastRated = false;
+
         if (this.participants.length() == 0) {
             return;
         }
@@ -398,6 +407,7 @@ class RatingSystem {
 
         double c = sqrt(teamSigmaSq[TEAM_ALPHA] + teamSigmaSq[TEAM_BETA] + 2.0 * RATING_BETA * RATING_BETA);
         double pAlpha = this.winChance(teamMu[TEAM_ALPHA], teamSigmaSq[TEAM_ALPHA], teamMu[TEAM_BETA], teamSigmaSq[TEAM_BETA]);
+        this.lastWinChance = pAlpha;
 
         // the expected team won comfortably: nothing learned, nobody moves
         if ((winningTeam == TEAM_ALPHA && pAlpha >= RATING_STOMP_THRESHOLD)
@@ -413,6 +423,7 @@ class RatingSystem {
             return;
         }
 
+        this.lastRated = true;
         double weight = RATING_UPDATE_WEIGHT;
         if (playerCount[TEAM_ALPHA] == 1 && playerCount[TEAM_BETA] == 1) {
             weight *= RATING_1V1_WEIGHT;

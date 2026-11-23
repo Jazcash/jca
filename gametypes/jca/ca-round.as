@@ -10,7 +10,6 @@ class cCARound {
     int timelimit;
     int alpha_oneVS;
     int beta_oneVS;
-    GameStats@ gameStats;
 
     cCARound() {
         this.state = CA_ROUNDSTATE_NONE;
@@ -89,6 +88,7 @@ class cCARound {
         }
 
         assists.resetAll();
+        statsLog.matchStarted();
 
         this.numRounds = 0;
         this.newRound();
@@ -98,6 +98,7 @@ class cCARound {
     }
 
     void endGame() {
+        statsLog.matchEnded(match.getState() == MATCH_STATE_POSTMATCH);
         this.newRoundState(CA_ROUNDSTATE_NONE);
 
         GENERIC_SetUpEndMatch();
@@ -144,6 +145,7 @@ class cCARound {
             this.beta_oneVS = 0;
 
             ratings.roundCancelled();
+            statsLog.roundCancelled();
             assists.newRound();
 
             Entity@ ent;
@@ -171,6 +173,7 @@ class cCARound {
             G_CenterPrintMsg(null, 'Fight!');
 
             ratings.roundStarted();
+            statsLog.roundStarted();
         }
         break;
 
@@ -224,13 +227,14 @@ class cCARound {
 
             int soundIndex;
 
+            int roundWinner = -1;
             if (count_alpha > count_beta) {
-                ratings.roundFinished(TEAM_ALPHA);
+                roundWinner = TEAM_ALPHA;
             } else if (count_beta > count_alpha) {
-                ratings.roundFinished(TEAM_BETA);
-            } else {
-                ratings.roundFinished(-1);
+                roundWinner = TEAM_BETA;
             }
+            ratings.roundFinished(roundWinner);
+            statsLog.roundFinished(roundWinner);
 
             if (count_alpha > count_beta) {
                 G_GetTeam(TEAM_ALPHA).stats.addScore(1);
