@@ -17,6 +17,12 @@ bool GT_Command(Client@ client, const String& cmdString, const String& argsStrin
     } else if (cmdString == "cvarinfo") {
         GENERIC_CheatVarResponse(client, cmdString, argsString, argc);
         return true;
+    } else if (cmdString.tolower() == "join" || cmdString.tolower() == "enterqueue") {
+        teamManager.cmdJoin(client, argsString);
+        return true;
+    } else if (cmdString.tolower() == "leavequeue") {
+        teamManager.leaveQueue(client, true);
+        return true;
     } else if (cmdString == "fish") {
         G_PrintMsg(client.getEnt(), client.getUserInfoKey("steam_id") + "\n");
         return true;
@@ -74,11 +80,18 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
     if (score_event == "dmg") {
         // args: target entity, damage, attacker entity
         if (caRound.state == CA_ROUNDSTATE_ROUND) {
+            float damage = args.getToken(1).toFloat();
+            // Telefrags deal 100000 damage (the event has no means of death, but
+            // crushers and trigger_hurt never have a client attacker). Count them
+            // as a full 300 HP kill so they don't wreck damage given/taken stats.
+            if (@client != null && damage >= TELEFRAG_RAW_DAMAGE) {
+                damage = TELEFRAG_STAT_DAMAGE;
+            }
             if (@client != null) {
                 assists.damaged(G_GetEntity(args.getToken(0).toInt()), client.getEnt());
-                mvp.damaged(G_GetEntity(args.getToken(0).toInt()), client.getEnt(), args.getToken(1).toFloat());
+                mvp.damaged(G_GetEntity(args.getToken(0).toInt()), client.getEnt(), damage);
             }
-            statsLog.damaged(G_GetEntity(args.getToken(0).toInt()), client, args.getToken(1).toFloat());
+            statsLog.damaged(G_GetEntity(args.getToken(0).toInt()), client, damage);
         }
     } else if (score_event == "kill") {
         Entity@ attacker = null;
@@ -106,6 +119,7 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
             statsLog.playerLeft(client); // before assists.reset, it reads their assists
         }
         if (@client != null) {
+            teamManager.clientChanged(client);
             assists.reset(client.playerNum);
             mvp.reset(client.playerNum);
         }
@@ -204,6 +218,7 @@ void GT_ThinkRules() {
 
     pingLimit.think();
     spawnGhosting.think();
+    teamManager.think();
 
     // print count of players alive and show class icon in the HUD
 
@@ -333,13 +348,14 @@ void GT_InitGametype() {
             + "set g_allow_selfdamage \"0\"\n"
             + "set g_allow_teamdamage \"0\"\n"
             + "set g_allow_stun \"0\"\n"
-            + "set g_teams_maxplayers \"5\"\n"
+            + "set g_teams_maxplayers \"8\" // 8v8, extra players queue as spectators\n"
             + "set g_teams_allow_uneven \"0\"\n"
             + "set g_countdown_time \"3\"\n"
             + "set g_maxtimeouts \"1\" // -1 = unlimited\n"
-            + "set g_inactivity_maxtime \"15\" // seconds idle mid-round before being moved to spectator (engine minimum 15)\n"
+            + "set g_inactivity_maxtime \"30\" // seconds idle mid-round before being moved to spectator (engine minimum 15)\n"
             + "set g_antilag_maxtimedelta \"250\" // max ms of lag compensation rewind (default 200)\n"
             + "\n// gametype settings\n"
+            + "set g_jca_autoteam \"" + g_jca_autoteam.integer + "\" // 1 = teams picked by skill, no team choice\n"
             + "set g_jca_maxping \"" + g_jca_maxping.integer + "\" // players above this ping can only spectate (0 = off)\n"
             + "set g_ca_timelimit1v1 \""+g_ca_timelimit1v1.integer+"\"\n"
             + "\n// classes settings\n"
@@ -393,6 +409,10 @@ void GT_InitGametype() {
     // add commands
     G_RegisterCommand("gametype");
     G_RegisterCommand("fish");
+    // take over the engine's team joining (see teams.as)
+    G_RegisterCommand("join");
+    G_RegisterCommand("enterqueue");
+    G_RegisterCommand("leavequeue");
 
     statsLog.mapName = Cvar("mapname", "", 0).string;
 

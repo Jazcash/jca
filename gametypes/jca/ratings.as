@@ -473,6 +473,25 @@ class RatingSystem {
     }
 
     // Scoreboard text for a player's rating.
+    // Sum of the team's displayed Skill values (unrated players count as 0).
+    int teamSkill(int teamNum) {
+        int total = 0;
+        Team@ team = @G_GetTeam(teamNum);
+        for (int j = 0; @team.ent(j) != null; j++) {
+            PlayerRating@ r = this.find(this.steamIdOf(team.ent(j).client));
+            if (@r != null) {
+                total += this.displayValue(r);
+            }
+        }
+        return total;
+    }
+
+    // Printed to everyone at the start of each round.
+    void printTeamSkills() {
+        G_PrintMsg(null, G_GetTeam(TEAM_ALPHA).name + S_COLOR_WHITE + " Skill: " + S_COLOR_YELLOW + this.teamSkill(TEAM_ALPHA)
+            + S_COLOR_WHITE + " vs " + G_GetTeam(TEAM_BETA).name + S_COLOR_WHITE + " Skill: " + S_COLOR_YELLOW + this.teamSkill(TEAM_BETA) + "\n");
+    }
+
     String scoreboardValue(Client@ client) {
         String steamId = this.steamIdOf(client);
         if (steamId.empty()) {

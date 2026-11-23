@@ -63,10 +63,21 @@ class MvpTracker {
         }
 
         if (best > 0) {
+            String names = "";
             for (int i = 0; i < maxClients; i++) {
                 if (this.roundDamage[i] == best) {
                     this.mvps[i]++;
+                    Client@ client = @G_GetClient(i);
+                    if (@client != null) {
+                        if (!names.empty()) {
+                            names += S_COLOR_WHITE + " & ";
+                        }
+                        names += client.name;
+                    }
                 }
+            }
+            if (!names.empty()) {
+                G_PrintMsg(null, names + S_COLOR_YELLOW + " MVP!" + S_COLOR_WHITE + " (" + rint(best) + " damage)\n");
             }
         }
 

@@ -150,6 +150,8 @@ class cCARound {
             assists.newRound();
             mvp.newRound();
 
+            teamManager.evenTeams(); // before the respawn below
+
             Entity@ ent;
             Team@ team;
 
@@ -162,6 +164,8 @@ class cCARound {
                     ent.client.respawn(false);
                 }
             }
+
+            ratings.printTeamSkills();
         }
         break;
 

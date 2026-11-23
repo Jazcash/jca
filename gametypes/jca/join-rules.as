@@ -1,6 +1,6 @@
 // Countdown ghosting and the join ping limit.
 
-Cvar g_jca_maxping = Cvar("g_jca_maxping", "150", 0); // 0 = no limit
+Cvar g_jca_maxping = Cvar("g_jca_maxping", "0", 0); // 0 = no limit (disabled for now, was 150)
 
 // Countdown ghosting: during the pre-round countdown players pass through each other
 // (PMFEAT_GHOSTMOVE only changes what blocks their own movement, so shots still hit them).

@@ -16,6 +16,7 @@ jca/ratings.as;
 jca/assists.as;
 jca/mvp.as;
 jca/join-rules.as;
+jca/teams.as;
 jca/welcome.as;
 
 legacy/quake1.as;

@@ -18,10 +18,12 @@ void showWelcome(Client@ client) {
         + " - Every round is rated: see the " + S_COLOR_YELLOW + "Skill" + S_COLOR_WHITE + " column, and try "
             + S_COLOR_YELLOW + "callvote rebalance" + S_COLOR_WHITE + " for fair teams\n"
         + " - Players pass through each other during the countdown\n"
+        + " - Up to " + S_COLOR_YELLOW + g_teams_maxplayers.integer + "v" + g_teams_maxplayers.integer + S_COLOR_WHITE
+            + ": if the teams are full, " + S_COLOR_YELLOW + "join" + S_COLOR_WHITE + " puts you in the queue\n"
         + " - Your killer's HP isn't shown when you die\n";
 
-    if (g_jca_maxping.integer > 0) {
-        msg += " - You must have <" + g_jca_maxping.integer + " ping to play\n";
+    if (g_jca_autoteam.integer != 0) {
+        msg += " - Teams are picked for you by skill to keep them balanced\n";
     }
     if (g_inactivity_maxtime.integer > 0) {
         msg += " - AFK removal is " + g_inactivity_maxtime.integer + "s\n";
