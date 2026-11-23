@@ -178,6 +178,7 @@ class cCARound {
             int soundIndex = G_SoundIndex("sounds/announcer/countdown/fight0" + (1 + (rand() & 1)));
             G_AnnouncerSound(null, soundIndex, GS_MAX_TEAMS, false, null);
             G_CenterPrintMsg(null, 'Fight!');
+            spawnGhosting.roundStarted();
 
             ratings.roundStarted();
             statsLog.roundStarted();

@@ -77,6 +77,10 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
         client.stats.setScore(statsCarry.damageGiven(client));
     }
 
+    if (score_event == "userinfochanged") {
+        handicapBlock.userinfoChanged(client);
+    }
+
     if (score_event == "dmg") {
         // args: target entity, damage, attacker entity
         if (caRound.state == CA_ROUNDSTATE_ROUND) {
@@ -154,6 +158,7 @@ void GT_PlayerRespawn(Entity@ ent, int old_team, int new_team) {
     }
 
     pingLimit.playerRespawned(ent, old_team, new_team);
+    handicapBlock.playerRespawned(ent);
     spawnGhosting.playerRespawned(ent);
 
     if (ent.isGhosting()) {
@@ -224,6 +229,7 @@ void GT_ThinkRules() {
     statsCarry.syncAll(); // must run before anything can wipe this frame's stats
 
     pingLimit.think();
+    handicapBlock.think();
     spawnGhosting.think();
     teamManager.think();
 

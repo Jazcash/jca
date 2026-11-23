@@ -9,8 +9,9 @@ The JCA gametype for Warfork is the standard Clan Arena experience with few nota
 - An assist is any damage dealt to an enemy who dies later in the same round, if you didn't get the kill
 - Killer's HP is no longer shown upon your death
 - Players are rated per round and their rating is shown in the scoreboard (Skill column)
-- During the pre-round countdown players pass through each other, so spawn clumps don't block. Collisions return at "Fight!" as soon as you're not overlapping anyone
+- During the pre-round countdown players pass through each other, so spawn clumps don't block. It ends at "Fight!": collisions come back straight away, except for players standing inside each other, who keep it only until they've moved apart (1.5 seconds at most)
 - Players idle for 30 seconds during a round are moved to spectator
+- Handicap is disabled: anyone with `handicap` set above 0 is moved to spectator until they type `handicap 0`
 - Teams are capped at 8v8, with unlimited spectators. If both teams are full, `join` puts you in a queue and you're added as soon as a slot frees up (type `leavequeue` to leave it)
 - You can't pick your team: joiners go to the team with fewer players, or if equal, the one with lower total skill. If players leave and teams end up 2 or more apart, someone is moved between rounds to even them, picking whoever keeps total skill closest (`g_jca_autoteam 0` turns this off and allows team choice)
 

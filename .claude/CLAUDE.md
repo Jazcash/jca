@@ -12,8 +12,9 @@ JCA is a custom **gametype for Warfork**, a Quake-style arena FPS built on the q
 - Scoreboard stats survive team changes and rebalance/shuffle. The engine zeroes a client's stats on every team change (and rebalance zeroes everyone it doesn't move), and the script can't write frags/deaths/damage back (only `setScore`). [stats-carry.as](../gametypes/jca/stats-carry.as) notices the drop and keeps a carried-over total that the scoreboard (and score = damage given) adds on top. Assists/MVPs just aren't reset; only the per-round data is (`clearRound`/`newRound`). Engine per-weapon accuracy counters are still wiped.
 - The killer's HP isn't shown on death.
 - OpenSkill (Weng-Lin Bradley-Terry) per-round ratings, plus `callvote rebalance` ([ratings.as](../gametypes/jca/ratings.as)). Tuning constants and the reasoning behind them are commented at the top of that file.
-- Countdown ghosting: `PMFEAT_GHOSTMOVE` during PREROUND, cleared once a player isn't overlapping anyone ([join-rules.as](../gametypes/jca/join-rules.as)). Player-vs-player blocking is decided in pmove, which also runs on clients, so teammate-only phasing isn't possible from the server.
+- Countdown ghosting: `PMFEAT_GHOSTMOVE` during PREROUND only. `roundStarted()` (called on the switch to ROUND) clears it for everyone not overlapping another player; overlapping players keep it until clear of the other remaining ghosts, capped at `GHOST_RELEASE_MAX_MS` ([join-rules.as](../gametypes/jca/join-rules.as)). Player-vs-player blocking is decided in pmove, which also runs on clients, so teammate-only phasing isn't possible from the server.
 - Join ping limit `g_jca_maxping` (currently disabled: default and jca.cfg are 0; it was 150), checked only when a spectator joins a team ([join-rules.as](../gametypes/jca/join-rules.as)).
+- Handicap block: the engine's `handicap` userinfo (cuts the player's damage by 1-90%) can't be turned off from script, so `HandicapBlock` ([join-rules.as](../gametypes/jca/join-rules.as)) moves anyone on a team with an effective handicap to spectator, checked on respawn and on the `userinfochanged` score event.
 - Welcome message on entering the game: chat/console intro plus a centre-print ([welcome.as](../gametypes/jca/welcome.as)). Keep it in sync with gameplay changes.
 - Team joining is handled by script ([teams.as](../gametypes/jca/teams.as)): `G_RegisterCommand("join")` overrides the engine's `join`/`enterqueue`/`leavequeue` (an existing command name registered from script is routed to `GT_Command`). Cap per team is the engine cvar `g_teams_maxplayers` (8), extras wait in a FIFO queue filled every frame, placement is by team size then total rating mu. `g_jca_autoteam 1` blocks team choice/switching and evens teams that differ by 2+ at each PREROUND. The engine's challengers queue is unused (it only runs outside PLAYTIME). Callvote `put`/bots still go through the engine directly.
 - A `fish` client command prints the caller's steam_id (debug helper).
@@ -37,7 +38,7 @@ gametypes/
     stats.as        StatsLogger: per-round/match stats appended as JSON lines to stats/jca-events.jsonl
                     (consumed by ~/jazcash.com, see server/utils/jca/ingest.ts there)
     utils.as        Warmup/countdown setup, formatFloat
-    join-rules.as   SpawnGhosting (countdown ghost move) and PingLimit (g_jca_maxping)
+    join-rules.as   SpawnGhosting (countdown ghost move), PingLimit (g_jca_maxping), HandicapBlock
     teams.as        TeamManager: join override, 8v8 cap, join queue, skill-based team placement
     welcome.as      showWelcome: intro text printed to each player on "enterGame" (every map load)
   generic/, shared/, legacy/
@@ -67,7 +68,7 @@ The repo lives at `~/warfork/jca`. The dedicated server is at `~/warfork/server`
 - The deployed copy can lag behind the repo, so diff before assuming they match: `diff -r gametypes/jca ~/warfork/server/basewf/progs/gametypes/jca`.
 - Gametype config: `~/.local/share/warfork-2.1/basewf/configs/server/gametypes/jca.cfg` (write directory, runs each time the gametype loads). Sets `g_inactivity_maxtime 30`, `g_antilag_maxtimedelta 250`, `g_teams_maxplayers 8`, `g_jca_autoteam` and `g_jca_maxping`. `sv_maxclients` (256, the engine maximum) is in server.cfg and only changes on a restart.
 - Snapshot rate: `sv_pps` can only be set on the command line, i.e. in the systemd unit's ExecStart (`+set sv_pps ...`). It's currently unset, so the engine default of 20 applies (40 was tried and reverted while checking whether it hurt players' connections).
-- Server config: `~/warfork/server/basewf/server.cfg` (sets `g_gametype "jca"`, Steam auth, votable gametypes). Timestamped `.bak` copies sit next to it.
+- Server config: `~/warfork/server/basewf/server.cfg` (sets `g_gametype "jca"`, Steam auth, votes: gametype votes are off and `g_votable_gametypes` is just `jca`; map votes are on but limited by `g_enforce_map_pool 1` to `g_map_pool`, which should list the same maps as `g_maplist`). Most cvars can be changed live without a restart by sending rcon over UDP to 127.0.0.1:44400 (password is `rcon_password` in server.cfg; never print it). Timestamped `.bak` copies sit next to it.
 - Server log: `~/.local/share/warfork-2.1/basewf/wfconsole.log`.
 - Stats event log: `~/.local/share/warfork-2.1/basewf/stats/jca-events.jsonl`, append-only. jazcash.com tails it into SQLite (`~/jca-data/jca.db`). If you change the line format, bump `STATS_VERSION` and update the ingester. Live player data: never truncate or rewrite it.
 - Ratings data: `~/.local/share/warfork-2.1/basewf/ratings/jca.txt` (write directory). Format, one player per line: `<steam_id> <mu> <sigma> <rounds> <name>`. This is live player data, so don't delete or overwrite it without asking.
