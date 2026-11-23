@@ -76,6 +76,7 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
         if (caRound.state == CA_ROUNDSTATE_ROUND) {
             if (@client != null) {
                 assists.damaged(G_GetEntity(args.getToken(0).toInt()), client.getEnt());
+                mvp.damaged(G_GetEntity(args.getToken(0).toInt()), client.getEnt(), args.getToken(1).toFloat());
             }
             statsLog.damaged(G_GetEntity(args.getToken(0).toInt()), client, args.getToken(1).toFloat());
         }
@@ -98,15 +99,19 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
         // target, attacker, inflictor
         caRound.playerKilled(G_GetEntity(arg1), attacker, G_GetEntity(arg2));
     } else if (score_event == "award") {
+    } else if (score_event == "enterGame") {
+        showWelcome(client);
     } else if (score_event == "connect" || score_event == "disconnect") {
         if (score_event == "disconnect") {
             statsLog.playerLeft(client); // before assists.reset, it reads their assists
         }
         if (@client != null) {
             assists.reset(client.playerNum);
+            mvp.reset(client.playerNum);
         }
     } else if (score_event == "rebalance" || score_event == "shuffle") {
         assists.resetAll(); // the engine clears everyone's scores
+        mvp.resetAll();
         // the engine has already rebalanced by score; redo it by rating instead
         if (score_event == "rebalance" && @client == null) {
             ratings.balanceTeams();
@@ -126,7 +131,11 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
 void GT_PlayerRespawn(Entity@ ent, int old_team, int new_team) {
     if (old_team != new_team) {
         assists.reset(ent.playerNum); // the engine clears scores on team change
+        mvp.reset(ent.playerNum);
     }
+
+    pingLimit.playerRespawned(ent, old_team, new_team);
+    spawnGhosting.playerRespawned(ent);
 
     if (ent.isGhosting()) {
         ent.svflags &= ~SVF_FORCETEAM;
@@ -192,6 +201,9 @@ void GT_ThinkRules() {
     }
 
     GENERIC_Think();
+
+    pingLimit.think();
+    spawnGhosting.think();
 
     // print count of players alive and show class icon in the HUD
 
@@ -325,7 +337,10 @@ void GT_InitGametype() {
             + "set g_teams_allow_uneven \"0\"\n"
             + "set g_countdown_time \"3\"\n"
             + "set g_maxtimeouts \"1\" // -1 = unlimited\n"
+            + "set g_inactivity_maxtime \"15\" // seconds idle mid-round before being moved to spectator (engine minimum 15)\n"
+            + "set g_antilag_maxtimedelta \"250\" // max ms of lag compensation rewind (default 200)\n"
             + "\n// gametype settings\n"
+            + "set g_jca_maxping \"" + g_jca_maxping.integer + "\" // players above this ping can only spectate (0 = off)\n"
             + "set g_ca_timelimit1v1 \""+g_ca_timelimit1v1.integer+"\"\n"
             + "\n// classes settings\n"
             + "set g_noclass_inventory \"" + g_noclass_inventory.string + "\"\n"
@@ -372,8 +387,8 @@ void GT_InitGametype() {
     }
 
     // define the scoreboard layout
-    G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "AVATAR Name Dmg K D A DG/DR Skill Ping R");
-    G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%a l1 %n 112 %i 40 %i 20 %i 20 %i 20 %s 42 %s 36 %l 38 %r l1");
+    G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "AVATAR Name Dmg K D A DG/DR MVP Skill Ping R");
+    G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%a l1 %n 128 %i 40 %i 20 %i 20 %i 20 %s 42 %i 32 %s 36 %l 38 %r l1");
 
     // add commands
     G_RegisterCommand("gametype");
@@ -438,6 +453,7 @@ String@ GT_ScoreboardMessage(uint maxlen) {
                 ent.client.stats.deaths + " " + 
                 assists.get(ent.playerNum) + " " +
                 dmgRatioStr + " " + 
+                mvp.get(ent.playerNum) + " " +
                 ratings.scoreboardValue(ent.client) + " " +
                 ent.client.ping + " " + 
                 (ent.client.isReady() ? "1" : "0") + " ";

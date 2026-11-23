@@ -8,9 +8,12 @@ JCA is a custom **gametype for Warfork**, a Quake-style arena FPS built on the q
 
 - No armor. Players spawn with health only (`ent.health` in `GT_PlayerRespawn`, [gt-callins.as](../gametypes/jca/gt-callins.as)). The current value is 300 (about 100hp + 150ra).
 - Assists: any damage to an enemy who later dies in the same round counts, unless you got the kill ([assists.as](../gametypes/jca/assists.as)).
-- Custom scoreboard columns: score, kills, deaths, assists, damage ratio (red below 1, green at 1 or above), skill rating and ping (`GT_ScoreboardMessage`). The column layout is declared in `GT_InitGametype`.
+- Custom scoreboard columns: score, kills, deaths, assists, damage ratio (red below 1, green at 1 or above), MVPs (most damage in a round, [mvp.as](../gametypes/jca/mvp.as)), skill rating and ping (`GT_ScoreboardMessage`). The column layout is declared in `GT_InitGametype`.
 - The killer's HP isn't shown on death.
 - OpenSkill (Weng-Lin Bradley-Terry) per-round ratings, plus `callvote rebalance` ([ratings.as](../gametypes/jca/ratings.as)). Tuning constants and the reasoning behind them are commented at the top of that file.
+- Countdown ghosting: `PMFEAT_GHOSTMOVE` during PREROUND, cleared once a player isn't overlapping anyone ([join-rules.as](../gametypes/jca/join-rules.as)). Player-vs-player blocking is decided in pmove, which also runs on clients, so teammate-only phasing isn't possible from the server.
+- Join ping limit `g_jca_maxping` (default 150), checked only when a spectator joins a team ([join-rules.as](../gametypes/jca/join-rules.as)).
+- Welcome message on entering the game: chat/console intro plus a centre-print ([welcome.as](../gametypes/jca/welcome.as)). Keep it in sync with gameplay changes.
 - A `fish` client command prints the caller's steam_id (debug helper).
 
 ## Layout
@@ -27,9 +30,12 @@ gametypes/
                     spawn selection, win detection, 1v1 time limit
     ratings.as      RatingSystem: OpenSkill maths, persistence to ratings/jca.txt, rebalance vote
     assists.as      AssistTracker
+    mvp.as          MvpTracker (most damage dealt per round)
     stats.as        StatsLogger: per-round/match stats appended as JSON lines to stats/jca-events.jsonl
                     (consumed by ~/jazcash.com, see server/utils/jca/ingest.ts there)
     utils.as        Warmup/countdown setup, formatFloat
+    join-rules.as   SpawnGhosting (countdown ghost move) and PingLimit (g_jca_maxping)
+    welcome.as      showWelcome: intro text printed to each player on "enterGame" (every map load)
   generic/, shared/, legacy/
                   Stock Warfork scripts, copied here for reference and IDE type resolution.
                   The live server loads its own copies from the game's pk3s, so editing these
@@ -55,6 +61,8 @@ The repo lives at `~/warfork/jca`. The dedicated server is at `~/warfork/server`
 
 - Deployed gametype: `~/warfork/server/basewf/progs/gametypes/{jca.gt,jca.gtd,jca/}`. Only these are copied, not `generic/`/`shared/`/`legacy/`. To deploy, copy them over and restart the service (`sudo systemctl restart warfork`). Back up the deployed copy first; earlier backups look like `~/warfork/jca-deploy-backup-<timestamp>/`.
 - The deployed copy can lag behind the repo, so diff before assuming they match: `diff -r gametypes/jca ~/warfork/server/basewf/progs/gametypes/jca`.
+- Gametype config: `~/.local/share/warfork-2.1/basewf/configs/server/gametypes/jca.cfg` (write directory, runs each time the gametype loads). Sets `g_inactivity_maxtime 15` (engine minimum), `g_antilag_maxtimedelta 250` and `g_jca_maxping`.
+- Snapshot rate: `sv_pps` can only be set on the command line, so it's in the systemd unit's ExecStart (`+set sv_pps ...`). The engine default is 20.
 - Server config: `~/warfork/server/basewf/server.cfg` (sets `g_gametype "jca"`, Steam auth, votable gametypes). Timestamped `.bak` copies sit next to it.
 - Server log: `~/.local/share/warfork-2.1/basewf/wfconsole.log`.
 - Stats event log: `~/.local/share/warfork-2.1/basewf/stats/jca-events.jsonl`, append-only. jazcash.com tails it into SQLite (`~/jca-data/jca.db`). If you change the line format, bump `STATS_VERSION` and update the ingester. Live player data: never truncate or rewrite it.

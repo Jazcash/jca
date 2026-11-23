@@ -14,5 +14,8 @@ jca/gt-callins.as;
 jca/stats.as;
 jca/ratings.as;
 jca/assists.as;
+jca/mvp.as;
+jca/join-rules.as;
+jca/welcome.as;
 
 legacy/quake1.as;

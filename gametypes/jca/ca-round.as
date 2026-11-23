@@ -88,6 +88,7 @@ class cCARound {
         }
 
         assists.resetAll();
+        mvp.resetAll();
         statsLog.matchStarted();
 
         this.numRounds = 0;
@@ -147,6 +148,7 @@ class cCARound {
             ratings.roundCancelled();
             statsLog.roundCancelled();
             assists.newRound();
+            mvp.newRound();
 
             Entity@ ent;
             Team@ team;
@@ -235,6 +237,7 @@ class cCARound {
             }
             ratings.roundFinished(roundWinner);
             statsLog.roundFinished(roundWinner);
+            mvp.roundFinished();
 
             if (count_alpha > count_beta) {
                 G_GetTeam(TEAM_ALPHA).stats.addScore(1);

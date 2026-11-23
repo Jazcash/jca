@@ -3,10 +3,14 @@
 The JCA gametype for Warfork is the standard Clan Arena experience with few notable differences:
 
 - Armor is removed, total health is 300 (roughly 100 HP + 150 armor in stock CA)
-- Scoreboard shows total damage dealt, kills, deaths, assists, damage given/taken ratio and skill rating
+- Scoreboard shows total damage dealt, kills, deaths, assists, damage given/taken ratio, MVPs and skill rating
+- MVP: at the end of each round, whoever dealt the most damage to enemies that round gets an MVP (ties all get one)
 - An assist is any damage dealt to an enemy who dies later in the same round, if you didn't get the kill
 - Killer's HP is no longer shown upon your death
 - Players are rated per round and their rating is shown in the scoreboard (Skill column)
+- During the pre-round countdown players pass through each other, so spawn clumps don't block. Collisions return at "Fight!" as soon as you're not overlapping anyone
+- Players with a ping above 150 can't join a team, but can spectate (`g_jca_maxping`, 0 turns it off). Ping is only checked when joining
+- Players idle for 15 seconds during a round are moved to spectator
 
 ## Player Ratings
 
