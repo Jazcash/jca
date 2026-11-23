@@ -88,6 +88,8 @@ class cCARound {
             }
         }
 
+        assists.resetAll();
+
         this.numRounds = 0;
         this.newRound();
         
@@ -141,6 +143,9 @@ class cCARound {
             this.alpha_oneVS = 0;
             this.beta_oneVS = 0;
 
+            ratings.roundCancelled();
+            assists.newRound();
+
             Entity@ ent;
             Team@ team;
 
@@ -164,6 +169,8 @@ class cCARound {
             int soundIndex = G_SoundIndex("sounds/announcer/countdown/fight0" + (1 + (rand() & 1)));
             G_AnnouncerSound(null, soundIndex, GS_MAX_TEAMS, false, null);
             G_CenterPrintMsg(null, 'Fight!');
+
+            ratings.roundStarted();
         }
         break;
 
@@ -216,6 +223,14 @@ class cCARound {
             }
 
             int soundIndex;
+
+            if (count_alpha > count_beta) {
+                ratings.roundFinished(TEAM_ALPHA);
+            } else if (count_beta > count_alpha) {
+                ratings.roundFinished(TEAM_BETA);
+            } else {
+                ratings.roundFinished(-1);
+            }
 
             if (count_alpha > count_beta) {
                 G_GetTeam(TEAM_ALPHA).stats.addScore(1);

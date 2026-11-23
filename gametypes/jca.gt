@@ -12,5 +12,7 @@ jca/utils.as;
 jca/ca-round.as;
 jca/gt-callins.as;
 jca/stats.as;
+jca/ratings.as;
+jca/assists.as;
 
 legacy/quake1.as;

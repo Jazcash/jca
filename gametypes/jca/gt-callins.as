@@ -65,13 +65,16 @@ bool GT_UpdateBotStatus(Entity@ ent) {
 
 // Warning: client can be null
 void GT_ScoreEvent(Client@ client, const String& score_event, const String& args) {
-    G_Print(client.name + ", " + score_event + ", " + args.getToken(0) + ", " + args.getToken(1) + "\n");
+    G_Print((@client != null ? client.name : "(world)") + ", " + score_event + ", " + args.getToken(0) + ", " + args.getToken(1) + "\n");
 
     if (match.getState() == MATCH_STATE_PLAYTIME && @client != null) {
         client.stats.setScore(int(client.stats.totalDamageGiven));
     }
 
     if (score_event == "dmg") {
+        if (caRound.state == CA_ROUNDSTATE_ROUND && @client != null) {
+            assists.damaged(G_GetEntity(args.getToken(0).toInt()), client.getEnt());
+        }
     } else if (score_event == "kill") {
         Entity@ attacker = null;
 
@@ -82,12 +85,27 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
         int arg1 = args.getToken(0).toInt();
         int arg2 = args.getToken(1).toInt();
 
+        if (caRound.state == CA_ROUNDSTATE_ROUND) {
+            assists.killed(G_GetEntity(arg1), attacker);
+        }
+
         // target, attacker, inflictor
         caRound.playerKilled(G_GetEntity(arg1), attacker, G_GetEntity(arg2));
     } else if (score_event == "award") {
+    } else if (score_event == "connect" || score_event == "disconnect") {
+        if (@client != null) {
+            assists.reset(client.playerNum);
+        }
     } else if (score_event == "rebalance" || score_event == "shuffle") {
+        assists.resetAll(); // the engine clears everyone's scores
+        // the engine has already rebalanced by score; redo it by rating instead
+        if (score_event == "rebalance" && @client == null) {
+            ratings.balanceTeams();
+        }
+
 		// end round when in match
         if ((@client == null) && (match.getState() == MATCH_STATE_PLAYTIME)) {
+            ratings.roundCancelled(); // teams changed mid-round, the result means nothing
             caRound.newRoundState(CA_ROUNDSTATE_ROUNDFINISHED);
         }	
     }
@@ -96,6 +114,10 @@ void GT_ScoreEvent(Client@ client, const String& score_event, const String& args
 // a player is being respawned. This can happen from several ways, as dying, changing team,
 // being moved to ghost state, be placed in respawn queue, being spawned from spawn queue, etc
 void GT_PlayerRespawn(Entity@ ent, int old_team, int new_team) {
+    if (old_team != new_team) {
+        assists.reset(ent.playerNum); // the engine clears scores on team change
+    }
+
     if (ent.isGhosting()) {
         ent.svflags &= ~SVF_FORCETEAM;
         return;
@@ -306,6 +328,8 @@ void GT_InitGametype() {
 
     caTimelimit1v1 = g_ca_timelimit1v1.integer;
 
+    ratings.load();
+
     gametype.spawnableItemsMask = 0;
     gametype.respawnableItemsMask = 0;
     gametype.dropableItemsMask = 0;
@@ -337,8 +361,8 @@ void GT_InitGametype() {
     }
 
     // define the scoreboard layout
-    G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "AVATAR Name Dmg K D A DG/DR Ping R");
-    G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%a l1 %n 112 %i 40 %i 20 %i 20 %i 20 %s 42 %l 38 %r l1");
+    G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "AVATAR Name Dmg K D A DG/DR Skill Ping R");
+    G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%a l1 %n 112 %i 40 %i 20 %i 20 %i 20 %s 42 %s 36 %l 38 %r l1");
 
     // add commands
     G_RegisterCommand("gametype");
@@ -399,8 +423,9 @@ String@ GT_ScoreboardMessage(uint maxlen) {
                 ent.client.stats.score + " " + 
                 ent.client.stats.frags + " " + 
                 ent.client.stats.deaths + " " + 
-                0 + " " + // TODO: assists
+                assists.get(ent.playerNum) + " " +
                 dmgRatioStr + " " + 
+                ratings.scoreboardValue(ent.client) + " " +
                 ent.client.ping + " " + 
                 (ent.client.isReady() ? "1" : "0") + " ";
 
